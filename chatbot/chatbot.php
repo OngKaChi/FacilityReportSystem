@@ -51,9 +51,14 @@ $data = [
                - Step 1: Ask if there is any phone number left on the windshield.
                - Step 2: Immediately ask the user to report with entering the double parked driver's license plate number and location in the report form.
                - Step 3: Because this cannot be resolved by the user, immediately say: 'Please submit a report with the details.'
+
+            Emergency Tier Classification:
+            - Normal: Non-urgent issues that do not pose immediate risk or danger.
+            - Urgent: Issues that require prompt attention but do not pose immediate danger.
+            - Emergency: Issues that pose immediate risk or danger and require immediate action.
             
             Operational Rules:
-            - If the user's issue does not fit one of these three types, politely inform them that you can only help with Broken Equipment, Maintenance, or Double Parking.
+            - If the user's issue does not fit one of these three types, politely inform them that you can only help with Broken Equipment, Maintenance, Double Parking or Emergency Tiers.
             - Always prioritize user safety. Never suggest an unsafe DIY fix.
             - Keep responses highly focused, punchy, and professional. Use Markdown bold text for key details.
             "]
@@ -64,48 +69,65 @@ $data = [
     ]
 ];
 
-// Retry configuration for Rate Limits
+// Encode the request body once before sending it.
+$requestBody = json_encode($data);
+if ($requestBody === false) {
+    echo json_encode(['reply' => 'System Error: Unable to prepare the assistant request.']);
+    exit;
+}
+
+if (!filter_var(ini_get('allow_url_fopen'), FILTER_VALIDATE_BOOLEAN)) {
+    echo json_encode(['reply' => 'System Error: PHP URL streams are disabled. Enable allow_url_fopen to use the assistant.']);
+    exit;
+}
+
+$context = stream_context_create([
+    'http' => [
+        'method' => 'POST',
+        'header' => implode("\r\n", [
+            'Content-Type: application/json',
+            'x-goog-api-key: ' . $apiKey,
+        ]),
+        'content' => $requestBody,
+        'timeout' => 30,
+        'ignore_errors' => true,
+    ],
+    'ssl' => [
+        'verify_peer' => true,
+        'verify_peer_name' => true,
+    ],
+]);
+
+// Retry rate-limited requests up to three times.
 $maxRetries = 3;
 $attempts = 0;
 $response = false;
-
-// Handle the response (Success or Error)
 $httpCode = 0;
 
 while ($attempts < $maxRetries) {
-    // 4. Initialize cURL session routing
-    $ch = curl_init($url);
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_POST, true);
-    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
+    error_clear_last();
+    $response = @file_get_contents($url, false, $context);
+    $responseHeaders = $http_response_header ?? [];
 
-    // Pass the API Key cleanly inside the header configuration to solve host resolution errors
-    curl_setopt($ch, CURLOPT_HTTPHEADER, [
-        'Content-Type: application/json',
-        'x-goog-api-key: ' . $apiKey
-    ]);
+    foreach ($responseHeaders as $header) {
+        if (preg_match('/^HTTP\/\S+\s+(\d{3})\b/', $header, $matches)) {
+            $httpCode = (int) $matches[1];
+        }
+    }
 
-    // SSL FIXES FOR XAMPP: Bypass local server SSL certificate verification checks
-    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-    curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
-
-    $response = curl_exec($ch);
-    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-
-    // Catch local connection or firewall route drops
-    if (curl_errno($ch)) {
-        echo json_encode(['reply' => 'Network Connection Error: ' . curl_error($ch)]);
-        curl_close($ch);
+    if ($response === false) {
+        $lastError = error_get_last();
+        $message = $lastError['message'] ?? 'The HTTPS request could not be completed.';
+        echo json_encode(['reply' => 'Network Connection Error: ' . $message]);
         exit;
     }
 
-    curl_close($ch);
-
-    // If rate limited, retry after a short delay
-    if ($httpCode == 429) {
+    if ($httpCode === 429) {
         $attempts++;
-        sleep(5); // Wait for 5 seconds before retrying
-        continue;
+        if ($attempts < $maxRetries) {
+            sleep(5);
+            continue;
+        }
     }
 
     break;

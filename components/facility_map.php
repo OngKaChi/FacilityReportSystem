@@ -17,12 +17,14 @@
 // Add/remove rooms to match your actual building layout.
 $floorRooms = [
   'Basement' => [
-    ['id'=>'parking_0_1', 'label'=>'Parking Hillside', 'x'=>590, 'y'=>100, 'w'=>60, 'h'=>185],
-    ['id'=>'parking_0_2', 'label'=>'Parking Outside', 'x'=>490, 'y'=>10, 'w'=>160, 'h'=>85],
+    ['id'=>'background_0_1', 'label'=>'', 'x'=>8, 'y'=>8, 'w'=>642, 'h'=>278, 'disabled'=>true],
+
+    ['id'=>'parking_0_1', 'label'=>'Hillside Parking', 'x'=>590, 'y'=>100, 'w'=>60, 'h'=>186],
+    ['id'=>'parking_0_2', 'label'=>'Outside Parking', 'x'=>490, 'y'=>8, 'w'=>160, 'h'=>87],
     ['id'=>'staircase_0_1', 'label'=>'Stair1', 'x'=>555, 'y'=>105, 'w'=>20, 'h'=>30],
     ['id'=>'parking_0_3', 'label'=>'Parking Basement 1', 'x'=>50, 'y'=>100, 'w'=>495, 'h'=>35],
-    ['id'=>'parking_0_4', 'label'=>'Parking Basement 2', 'x'=>10, 'y'=>140, 'w'=>35, 'h'=>105],
-    ['id'=>'parking_0_5', 'label'=>'Parking Basement 3', 'x'=>50, 'y'=>250, 'w'=>455, 'h'=>35],
+    ['id'=>'parking_0_4', 'label'=>'Parking Basement 2', 'x'=>8, 'y'=>140, 'w'=>37, 'h'=>106],
+    ['id'=>'parking_0_5', 'label'=>'Parking Basement 3', 'x'=>50, 'y'=>250, 'w'=>455, 'h'=>36],
     ['id'=>'parking_0_6', 'label'=>'Parking Basement 4', 'x'=>510, 'y'=>165, 'w'=>35, 'h'=>80],
     ['id'=>'parking_0_7', 'label'=>'Parking Basement 5', 'x'=>80, 'y'=>200, 'w'=>395, 'h'=>25],
     ['id'=>'parking_0_8', 'label'=>'Parking Basement 6', 'x'=>80, 'y'=>170, 'w'=>395, 'h'=>25],
@@ -30,8 +32,10 @@ $floorRooms = [
     
   ],
   'Level 1' => [
-    ['id'=>'parking_1_1', 'label'=>'Parking Downhill', 'x'=>10, 'y'=>45, 'w'=>40, 'h'=>240],
-    ['id'=>'parking_1_2', 'label'=>'Parking Uphill', 'x'=>610, 'y'=>45, 'w'=>40, 'h'=>240],
+    ['id'=>'background_1_1', 'label'=>'', 'x'=>8, 'y'=>8, 'w'=>642, 'h'=>278, 'disabled'=>true],
+
+    ['id'=>'parking_1_1', 'label'=>'Downhill Parking', 'x'=>8, 'y'=>45, 'w'=>40, 'h'=>241],
+    ['id'=>'parking_1_2', 'label'=>'Uphill Parking', 'x'=>610, 'y'=>45, 'w'=>40, 'h'=>241],
     
     ['id'=>'parking_1_3', 'label'=>'Parking Ground 1', 'x'=>155, 'y'=>10, 'w'=>450, 'h'=>25],
     ['id'=>'staircase_1_1', 'label'=>'Stair1', 'x'=>615, 'y'=>10, 'w'=>20, 'h'=>25],
@@ -57,22 +61,25 @@ $floorRooms = [
     
     ['id'=>'parking_1_8', 'label'=>'Parking Ground 6', 'x'=>140, 'y'=>205, 'w'=>405, 'h'=>25],
     
-    ['id'=>'parking_1_9', 'label'=>'Parking Ground 7', 'x'=>60, 'y'=>260, 'w'=>540, 'h'=>25],
+    ['id'=>'parking_1_9', 'label'=>'Parking Ground 7', 'x'=>60, 'y'=>260, 'w'=>540, 'h'=>26],
   ],
   'Level 2' => [
-      ['id'=>'parking_2_1', 'label'=>'Parking 1', 'x'=>140, 'y'=>10, 'w'=>380, 'h'=>45],
+    ['id'=>'background_2_1', 'label'=>'', 'x'=>8, 'y'=>8, 'w'=>642, 'h'=>278, 'disabled'=>true],
+
+      ['id'=>'parking_2_1', 'label'=>'Parking 1', 'x'=>140, 'y'=>8, 'w'=>380, 'h'=>45],
       ['id'=>'parking_2_2', 'label'=>'Parking 2', 'x'=>345, 'y'=>240, 'w'=>175, 'h'=>15],
-      ['id'=>'parking_2_3', 'label'=>'Parking 3', 'x'=>230, 'y'=>270, 'w'=>290, 'h'=>15],
-      ['id'=>'parking_2_4', 'label'=>'Parking 4',  'x'=>90, 'y'=>10,  'w'=>40, 'h'=>225],
-      ['id'=>'parking_2_5', 'label'=>'Parking 5',  'x'=>530, 'y'=>10,  'w'=>40, 'h'=>275],
+      ['id'=>'parking_2_3', 'label'=>'Parking 3', 'x'=>230, 'y'=>270, 'w'=>290, 'h'=>16],
+      ['id'=>'parking_2_4', 'label'=>'Parking 4',  'x'=>90, 'y'=>8,  'w'=>40, 'h'=>225],
+      ['id'=>'parking_2_5', 'label'=>'Parking 5',  'x'=>530, 'y'=>8,  'w'=>40, 'h'=>278],
 
       // ── TOP ROW ──────────────────────────────────────────────────────────────
       ['id'=>'staircase_2_1', 'label'=>'Stair1', 'x'=>137.4, 'y'=>64.1, 'w'=>18, 'h'=>43.2],
       ['id'=>'room_2_1',      'label'=>'Alkira Restaurant', 'x'=>159, 'y'=>64.1, 'w'=>96, 'h'=>43.2],
-      ['id'=>'room_2_2',      'label'=>'Room', 'x'=>258.6, 'y'=>64.1, 'w'=>83.4, 'h'=>43.2],
-      ['id'=>'room_2_3',      'label'=>'Room', 'x'=>345.6, 'y'=>64.1, 'w'=>41.4, 'h'=>43.2],
-      ['id'=>'room_2_4',      'label'=>'Artificial Intelligence Laboratory', 'x'=>390, 'y'=>64.1, 'w'=>41.4, 'h'=>43.2],
-      ['id'=>'room_2_5',      'label'=>'Cloud Computing Laboratory', 'x'=>434.4, 'y'=>64.1, 'w'=>41.4, 'h'=>43.2],
+      ['id'=>'room_2_2',      'label'=>'Registry Office', 'x'=>258.6, 'y'=>64.1, 'w'=>40.4, 'h'=>43.2],
+      ['id'=>'room_2_3',      'label'=>'Finance Office', 'x'=>302.6, 'y'=>64.1, 'w'=>40.4, 'h'=>43.2],
+      ['id'=>'room_2_4',      'label'=>'University Placement Office / Sick Bay', 'x'=>346.6, 'y'=>64.1, 'w'=>40.4, 'h'=>43.2],
+      ['id'=>'room_2_5',      'label'=>'Artificial Intelligence Laboratory', 'x'=>390, 'y'=>64.1, 'w'=>41.4, 'h'=>43.2],
+      ['id'=>'room_2_6',      'label'=>'Cloud Computing Laboratory', 'x'=>434.4, 'y'=>64.1, 'w'=>41.4, 'h'=>43.2],
       ['id'=>'toilets_2_1',   'label'=>'Male Toilet', 'x'=>477.6, 'y'=>64.1, 'w'=>24, 'h'=>43.2],
       ['id'=>'staircase_2_2', 'label'=>'Stair2', 'x'=>504.6, 'y'=>64.1, 'w'=>18, 'h'=>43.2],
 
@@ -80,41 +87,46 @@ $floorRooms = [
       ['id'=>'corridor_2_1',  'label'=>'', 'x'=>137.4, 'y'=>108.5, 'w'=>385.2, 'h'=>9.6, 'type'=>'corridor'],
 
       // ── MIDDLE ROW ───────────────────────────────────────────────────────────
-      ['id'=>'cooking_2_1', 'label'=>'', 'x'=>137.4, 'y'=>119.3, 'w'=>42, 'h'=>28.1],
-      ['id'=>'cooking_2_2', 'label'=>'', 'x'=>137.4, 'y'=>147.5, 'w'=>42, 'h'=>28.1],
+      ['id'=>'room_2_7', 'label'=>'Pastry Kitchen', 'x'=>137.4, 'y'=>119.3, 'w'=>42, 'h'=>56.3],
       ['id'=>'cafeteria_2_1', 'label'=>'Cafeteria A', 'x'=>179.6, 'y'=>119.3, 'w'=>60.8, 'h'=>56.4],
-      ['id'=>'empty_2_1',     'label'=>'', 'x'=>240.6, 'y'=>119.3, 'w'=>24, 'h'=>56.4],
+      ['id'=>'empty_2_1',     'label'=>'', 'x'=>240.6, 'y'=>119.3, 'w'=>24, 'h'=>56.4, 'disabled'=>true],
       ['id'=>'lift_2_2',      'label'=>'Lift 2', 'x'=>243.6, 'y'=>125.3, 'w'=>23.4, 'h'=>20.4],
       ['id'=>'lift_2_1',      'label'=>'Lift 1', 'x'=>243.6, 'y'=>149.3, 'w'=>23.4, 'h'=>20.4],
       ['id'=>'lobby_2_1',     'label'=>'Lobby', 'x'=>267.4, 'y'=>119.3, 'w'=>74.8, 'h'=>56.4],
-      ['id'=>'empty_2_2',     'label'=>'', 'x'=>345.6, 'y'=>119.3, 'w'=>34, 'h'=>56.4],
-      ['id'=>'staircase_2_3', 'label'=>'Main Stair', 'x'=>342.6, 'y'=>137.3, 'w'=>36, 'h'=>20.4],
+      ['id'=>'empty_2_2',     'label'=>'', 'x'=>345.6, 'y'=>119.3, 'w'=>34, 'h'=>56.4, 'disabled'=>true],
+      ['id'=>'staircase_2_3', 'label'=>'Middle Staircase', 'x'=>342.6, 'y'=>137.3, 'w'=>36, 'h'=>20.4],
       ['id'=>'cafeteria_2_2', 'label'=>'Cafeteria B', 'x'=>379.6, 'y'=>119.3, 'w'=>51, 'h'=>56.4],
+      ['id'=>'room_2_8',      'label'=>'Student Affairs Office', 'x'=>381.6, 'y'=>129.3, 'w'=>13, 'h'=>13],
+      ['id'=>'room_2_9',     'label'=>'INTIMA Office', 'x'=>396.6, 'y'=>129.3, 'w'=>23, 'h'=>13],
       ['id'=>'corridor_2_2',  'label'=>'', 'x'=>430.8, 'y'=>118.1, 'w'=>14.4, 'h'=>58.8, 'type'=>'corridor'],
-      ['id'=>'room_2_6',      'label'=>'Room', 'x'=>446.4, 'y'=>119.3, 'w'=>76.2, 'h'=>27],
-      ['id'=>'room_2_7',      'label'=>'Bilik MDF', 'x'=>446.4, 'y'=>148.7, 'w'=>76.2, 'h'=>27],
+      ['id'=>'room_2_10',      'label'=>'Hotel Mock Room', 'x'=>446.4, 'y'=>119.3, 'w'=>76.2, 'h'=>28.1],
+      ['id'=>'room_2_11',      'label'=>'Startup Incubator', 'x'=>446.4, 'y'=>147.8, 'w'=>76.2, 'h'=>13.7],
+      ['id'=>'room_2_12',      'label'=>'Bilik MDF', 'x'=>446.4, 'y'=>162, 'w'=>76.2, 'h'=>13.7],
 
       // ── LOWER CORRIDOR ───────────────────────────────────────────────────────
       ['id'=>'corridor_2_3',  'label'=>'', 'x'=>137.4, 'y'=>176.9, 'w'=>385.2, 'h'=>9.6, 'type'=>'corridor'],
 
       // ── BOTTOM ROW ───────────────────────────────────────────────────────────
       ['id'=>'staircase_2_4', 'label'=>'Stair3', 'x'=>137.4, 'y'=>187.7, 'w'=>18, 'h'=>43.2],
-      ['id'=>'room_2_8',      'label'=>'Room', 'x'=>159, 'y'=>187.7, 'w'=>33.6, 'h'=>43.2],
-      ['id'=>'room_2_9',      'label'=>'Room', 'x'=>198.6, 'y'=>187.7, 'w'=>56.4, 'h'=>43.2],
-      ['id'=>'room_2_10',     'label'=>'Reception', 'x'=>258.6, 'y'=>187.7, 'w'=>83.4, 'h'=>43.2],
-      ['id'=>'room_2_11',     'label'=>'AFM', 'x'=>345.6, 'y'=>187.7, 'w'=>42, 'h'=>43.2],
-      ['id'=>'room_2_12',     'label'=>'Radio Conti Room', 'x'=>390.6, 'y'=>187.7, 'w'=>27, 'h'=>43.2],
-      ['id'=>'room_2_13',     'label'=>'Photography / Recording / Broadcast Studio', 'x'=>420.6, 'y'=>187.7, 'w'=>54, 'h'=>43.2],
+      ['id'=>'room_2_13',      'label'=>'Cafeteria', 'x'=>159, 'y'=>187.7, 'w'=>35.6, 'h'=>43.2],
+      ['id'=>'room_2_14',      'label'=>'Room', 'x'=>198.6, 'y'=>187.7, 'w'=>56.4, 'h'=>43.2],
+      ['id'=>'room_2_15',     'label'=>'Reception', 'x'=>258.6, 'y'=>187.7, 'w'=>83.4, 'h'=>43.2],
+      ['id'=>'room_2_16',     'label'=>'Chef Executive / Government Liaison Complaince / HDRF Training Provider Office', 'x'=>345.6, 'y'=>187.7, 'w'=>22, 'h'=>43.2],
+      ['id'=>'room_2_17',     'label'=>'AFM', 'x'=>370.6, 'y'=>187.7, 'w'=>42, 'h'=>43.2],
+      ['id'=>'room_2_18',     'label'=>'Radio Conti Room / Photography Studio', 'x'=>415.6, 'y'=>187.7, 'w'=>28, 'h'=>43.2],
+      ['id'=>'room_2_19',     'label'=>'Recording / Broadcast Studio', 'x'=>446.6, 'y'=>187.7, 'w'=>28, 'h'=>43.2],
       ['id'=>'toilets_2_2',   'label'=>'Female Toilet', 'x'=>477.6, 'y'=>187.7, 'w'=>24, 'h'=>43.2],
       ['id'=>'staircase_2_5', 'label'=>'Stair4', 'x'=>504.6, 'y'=>187.7, 'w'=>18, 'h'=>43.2],
   ],
 
   'Level 3' => [
+    ['id'=>'background_3_1', 'label'=>'', 'x'=>8, 'y'=>8, 'w'=>642, 'h'=>278, 'disabled'=>true],
+
     ['id'=>'staircase_3_1', 'label'=>'Stair1', 'x'=>8, 'y'=>8, 'w'=>30, 'h'=>72],
     ['id'=>'room_3_1',      'label'=>'Aristotle Room', 'x'=>44, 'y'=>8, 'w'=>61, 'h'=>72],
     ['id'=>'room_3_2',      'label'=>'CADP / SOHOS / Language & MPU Centre / Student Experience Office / International Office', 'x'=>110, 'y'=>8, 'w'=>61, 'h'=>72],
     ['id'=>'room_3_3',      'label'=>'Network Lab', 'x'=>176, 'y'=>8, 'w'=>61, 'h'=>72],
-    ['id'=>'room_3_4',      'label'=>'Room', 'x'=>242, 'y'=>8, 'w'=>61, 'h'=>72],
+    ['id'=>'room_3_4',      'label'=>'Information Technology Services', 'x'=>242, 'y'=>8, 'w'=>61, 'h'=>72],
     ['id'=>'room_3_5',      'label'=>'IT Lab B', 'x'=>308, 'y'=>8, 'w'=>61, 'h'=>72],
     ['id'=>'room_3_6',      'label'=>'IT Lab A', 'x'=>374, 'y'=>8, 'w'=>61, 'h'=>72],
     ['id'=>'room_3_7',      'label'=>'Thermofluid Lab', 'x'=>440, 'y'=>8, 'w'=>61, 'h'=>72],
@@ -129,16 +141,16 @@ $floorRooms = [
     ['id'=>'room_3_9',      'label'=>'CEPS', 'x'=>8, 'y'=>100, 'w'=>74, 'h'=>46],
     ['id'=>'room_3_10',     'label'=>'Solid Mechanics Lab', 'x'=>8, 'y'=>148, 'w'=>74, 'h'=>46],
     ['id'=>'corridor_3_2',  'label'=>'', 'x'=>84, 'y'=>98, 'w'=>24, 'h'=>98, 'type'=>'corridor'],
-    ['id'=>'empty_3_1',     'label'=>'', 'x'=>110, 'y'=>100, 'w'=>110, 'h'=>94],
+    ['id'=>'empty_3_1',     'label'=>'', 'x'=>110, 'y'=>100, 'w'=>110, 'h'=>94, 'disabled'=>true],
     ['id'=>'lift_3_2',      'label'=>'Lift 2', 'x'=>185, 'y'=>110, 'w'=>39, 'h'=>34],
     ['id'=>'lift_3_1',      'label'=>'Lift 1', 'x'=>185, 'y'=>150, 'w'=>39, 'h'=>34],
     ['id'=>'cubical_area',  'label'=>'Cubical Area', 'x'=>235, 'y'=>102, 'w'=>105, 'h'=>90],
-    ['id'=>'empty_3_2',     'label'=>'', 'x'=>355, 'y'=>100, 'w'=>140, 'h'=>94],
-    ['id'=>'staircase_3_3', 'label'=>'Main Stair', 'x'=>350, 'y'=>130, 'w'=>60, 'h'=>34],
+    ['id'=>'empty_3_2',     'label'=>'', 'x'=>355, 'y'=>100, 'w'=>140, 'h'=>94, 'disabled'=>true],
+    ['id'=>'staircase_3_3', 'label'=>'Middle Staircase', 'x'=>350, 'y'=>130, 'w'=>60, 'h'=>34],
     ['id'=>'corridor_3_3',  'label'=>'', 'x'=>497, 'y'=>98, 'w'=>24, 'h'=>98, 'type'=>'corridor'],
     ['id'=>'room_3_11',     'label'=>'Corporate Training Room 1', 'x'=>523, 'y'=>100, 'w'=>127, 'h'=>45],
     ['id'=>'room_3_12',     'label'=>'Human Resource Office', 'x'=>523, 'y'=>117, 'w'=>55, 'h'=>28],
-    ['id'=>'room_3_13',     'label'=>'Room', 'x'=>523, 'y'=>147, 'w'=>70, 'h'=>47],
+    ['id'=>'room_3_13',     'label'=>'Career Services Office', 'x'=>523, 'y'=>147, 'w'=>70, 'h'=>47],
     ['id'=>'room_3_14',     'label'=>'Convenience Store', 'x'=>595, 'y'=>147, 'w'=>55, 'h'=>47],
 
     // Lower corridor
@@ -153,6 +165,8 @@ $floorRooms = [
     ['id'=>'staircase_3_5', 'label'=>'Stair4', 'x'=>620, 'y'=>214, 'w'=>30, 'h'=>72],
   ],
   'Level 4' => [
+    ['id'=>'background_4_1', 'label'=>'', 'x'=>8, 'y'=>8, 'w'=>642, 'h'=>278, 'disabled'=>true],
+
     ['id'=>'staircase_4_1', 'label'=>'Stair1', 'x'=>8, 'y'=>8, 'w'=>30, 'h'=>72],
     ['id'=>'room_4_1',      'label'=>'LR401A', 'x'=>44, 'y'=>8, 'w'=>61, 'h'=>72],
     ['id'=>'room_4_2',      'label'=>'LR401', 'x'=>110, 'y'=>8, 'w'=>61, 'h'=>72],
@@ -172,11 +186,11 @@ $floorRooms = [
     ['id'=>'room_4_9',      'label'=>'Design Simulation Lab', 'x'=>8, 'y'=>100, 'w'=>74, 'h'=>46],
     ['id'=>'room_4_10',      'label'=>'Science Lab Store', 'x'=>8, 'y'=>148, 'w'=>74, 'h'=>46],
     ['id'=>'corridor_4_2',  'label'=>'', 'x'=>84, 'y'=>98, 'w'=>24, 'h'=>98, 'type'=>'corridor'],
-    ['id'=>'empty_4_1',     'label'=>'', 'x'=>110, 'y'=>100, 'w'=>110, 'h'=>94],
+    ['id'=>'empty_4_1',     'label'=>'', 'x'=>110, 'y'=>100, 'w'=>110, 'h'=>94, 'disabled'=>true],
     ['id'=>'lift_4_2',      'label'=>'Lift 2', 'x'=>185, 'y'=>110, 'w'=>39, 'h'=>34],
     ['id'=>'lift_4_1',      'label'=>'Lift 1', 'x'=>185, 'y'=>150, 'w'=>39, 'h'=>34],
     ['id'=>'study_area',  'label'=>'Study Area', 'x'=>235, 'y'=>102, 'w'=>105, 'h'=>90],
-    ['id'=>'empty_4_2',     'label'=>'', 'x'=>355, 'y'=>100, 'w'=>140, 'h'=>94],
+    ['id'=>'empty_4_2',     'label'=>'', 'x'=>355, 'y'=>100, 'w'=>140, 'h'=>94, 'disabled'=>true],
     ['id'=>'staircase_4_3', 'label'=>'Main Stair', 'x'=>350, 'y'=>130, 'w'=>60, 'h'=>34],
     ['id'=>'corridor_4_3',  'label'=>'', 'x'=>497, 'y'=>98, 'w'=>24, 'h'=>98, 'type'=>'corridor'],
     ['id'=>'room_4_11',     'label'=>'Project Lab 2', 'x'=>523, 'y'=>100, 'w'=>127, 'h'=>46],
@@ -198,15 +212,17 @@ $floorRooms = [
     ['id'=>'staircase_4_5', 'label'=>'Stair4', 'x'=>620, 'y'=>214, 'w'=>30, 'h'=>72],
   ],
   'Level 5' => [
+    ['id'=>'background_5_1', 'label'=>'', 'x'=>8, 'y'=>8, 'w'=>642, 'h'=>278, 'disabled'=>true],
+
     ['id'=>'staircase_5_1', 'label'=>'Stair1', 'x'=>8, 'y'=>8, 'w'=>30, 'h'=>72],
-    ['id'=>'room_5_1',      'label'=>'LR501A', 'x'=>40, 'y'=>8, 'w'=>60, 'h'=>72],
-    ['id'=>'room_5_2',      'label'=>'LR501', 'x'=>102, 'y'=>8, 'w'=>60, 'h'=>72],
-    ['id'=>'room_5_3',      'label'=>'LR502', 'x'=>164, 'y'=>8, 'w'=>60, 'h'=>72],
-    ['id'=>'room_5_4',      'label'=>'LR503', 'x'=>226, 'y'=>8, 'w'=>65, 'h'=>72],
-    ['id'=>'room_5_5',      'label'=>'LR504', 'x'=>296, 'y'=>8, 'w'=>65, 'h'=>72],
-    ['id'=>'room_5_6',      'label'=>'LR505', 'x'=>366, 'y'=>8, 'w'=>65, 'h'=>72],
-    ['id'=>'room_5_7',      'label'=>'LR506', 'x'=>436, 'y'=>8, 'w'=>65, 'h'=>72],
-    ['id'=>'room_5_8',      'label'=>'LR507', 'x'=>506, 'y'=>8, 'w'=>65, 'h'=>72],
+    ['id'=>'room_5_1',      'label'=>'LR501', 'x'=>40, 'y'=>8, 'w'=>60, 'h'=>72],
+    ['id'=>'room_5_2',      'label'=>'LR502', 'x'=>102, 'y'=>8, 'w'=>60, 'h'=>72],
+    ['id'=>'room_5_3',      'label'=>'LR503', 'x'=>164, 'y'=>8, 'w'=>60, 'h'=>72],
+    ['id'=>'room_5_4',      'label'=>'LR504', 'x'=>226, 'y'=>8, 'w'=>65, 'h'=>72],
+    ['id'=>'room_5_5',      'label'=>'LR505', 'x'=>296, 'y'=>8, 'w'=>65, 'h'=>72],
+    ['id'=>'room_5_6',      'label'=>'LR506', 'x'=>366, 'y'=>8, 'w'=>65, 'h'=>72],
+    ['id'=>'room_5_7',      'label'=>'LR507', 'x'=>436, 'y'=>8, 'w'=>65, 'h'=>72],
+    ['id'=>'room_5_8',      'label'=>'LR508', 'x'=>506, 'y'=>8, 'w'=>65, 'h'=>72],
     ['id'=>'toilets_5_1',   'label'=>'Male Toilet', 'x'=>575, 'y'=>8, 'w'=>40, 'h'=>72],
     ['id'=>'staircase_5_2', 'label'=>'Stair2', 'x'=>620, 'y'=>8, 'w'=>30, 'h'=>72],
 
@@ -214,16 +230,17 @@ $floorRooms = [
     ['id'=>'corridor_5_1', 'label'=>'', 'x'=>8, 'y'=>82, 'w'=>642, 'h'=>16, 'type'=>'corridor'],
 
     // Middle row
-    ['id'=>'room_5_9',      'label'=>'Room', 'x'=>8, 'y'=>100, 'w'=>74, 'h'=>94],
+    ['id'=>'room_5_9',      'label'=>'Mock Reception', 'x'=>8, 'y'=>100, 'w'=>74, 'h'=>46],
+    ['id'=>'room_5_10',      'label'=>'iMAC Lab', 'x'=>8, 'y'=>148, 'w'=>74, 'h'=>46],
     ['id'=>'corridor_5_2',  'label'=>'', 'x'=>84, 'y'=>98, 'w'=>24, 'h'=>98, 'type'=>'corridor'],
-    ['id'=>'empty_5_1',     'label'=>'', 'x'=>110, 'y'=>100, 'w'=>110, 'h'=>94],
+    ['id'=>'empty_5_1',     'label'=>'', 'x'=>110, 'y'=>100, 'w'=>110, 'h'=>94, 'disabled'=>true],
     ['id'=>'lift_5_2',      'label'=>'Lift 2', 'x'=>185, 'y'=>110, 'w'=>39, 'h'=>34],
     ['id'=>'lift_5_1',      'label'=>'Lift 1', 'x'=>185, 'y'=>150, 'w'=>39, 'h'=>34],
-    ['id'=>'empty_5_2',     'label'=>'', 'x'=>355, 'y'=>100, 'w'=>140, 'h'=>94],
-    ['id'=>'staircase_5_3', 'label'=>'Main Stair', 'x'=>350, 'y'=>130, 'w'=>60, 'h'=>34],
+    ['id'=>'empty_5_2',     'label'=>'', 'x'=>355, 'y'=>100, 'w'=>140, 'h'=>94, 'disabled'=>true],
+    ['id'=>'staircase_5_3', 'label'=>'Middle Staircase', 'x'=>350, 'y'=>130, 'w'=>60, 'h'=>34],
     ['id'=>'corridor_5_3',  'label'=>'', 'x'=>497, 'y'=>98, 'w'=>24, 'h'=>98, 'type'=>'corridor'],
-    ['id'=>'room_5_10',     'label'=>'Room', 'x'=>523, 'y'=>100, 'w'=>63, 'h'=>46],
-    ['id'=>'room_5_11',     'label'=>'Room', 'x'=>587, 'y'=>100, 'w'=>63, 'h'=>46],
+    ['id'=>'room_5_10',     'label'=>'STEM Lab', 'x'=>523, 'y'=>100, 'w'=>63, 'h'=>46],
+    ['id'=>'room_5_11',     'label'=>'LR509B', 'x'=>587, 'y'=>100, 'w'=>63, 'h'=>46],
     ['id'=>'room_5_12',     'label'=>'LR501A', 'x'=>523, 'y'=>148, 'w'=>63, 'h'=>46],
     ['id'=>'room_5_13',     'label'=>'LR501B', 'x'=>587, 'y'=>148, 'w'=>63, 'h'=>46],
 
@@ -243,8 +260,10 @@ $floorRooms = [
     ['id'=>'staircase_5_5', 'label'=>'Stair4', 'x'=>620, 'y'=>214, 'w'=>30, 'h'=>72],
   ],
   'Level 6' => [
+    ['id'=>'background_6_1', 'label'=>'', 'x'=>8, 'y'=>8, 'w'=>642, 'h'=>278, 'disabled'=>true],
     // Top row
     ['id'=>'staircase_6_1', 'label'=>'Stair1', 'x'=>8, 'y'=>8, 'w'=>30, 'h'=>72],
+    ['id'=>'room_6_1',      'label'=>'Exam Room', 'x'=>98, 'y'=>8, 'w'=>110, 'h'=>72],
     ['id'=>'library_6_1',   'label'=>'Discussion Room', 'x'=>44, 'y'=>8, 'w'=>160, 'h'=>72],
     ['id'=>'library_6_2',   'label'=>'Library', 'x'=>210, 'y'=>8, 'w'=>315, 'h'=>72],
     ['id'=>'toilets_6_1',   'label'=>'Female Toilet', 'x'=>530, 'y'=>8, 'w'=>40, 'h'=>72],
@@ -255,13 +274,14 @@ $floorRooms = [
     ['id'=>'corridor_6_1', 'label'=>'', 'x'=>8, 'y'=>82, 'w'=>642, 'h'=>16, 'type'=>'corridor'],
 
     // Middle row
-    ['id'=>'room_6_1',      'label'=>'Room', 'x'=>8, 'y'=>100, 'w'=>100, 'h'=>94],
-    ['id'=>'empty_6_1',     'label'=>'', 'x'=>110, 'y'=>100, 'w'=>110, 'h'=>94],
+    ['id'=>'room_6_2',      'label'=>'LR604', 'x'=>8, 'y'=>100, 'w'=>100, 'h'=>46],
+    ['id'=>'room_6_3',      'label'=>'LR603', 'x'=>8, 'y'=>148, 'w'=>100, 'h'=>46],
+    ['id'=>'empty_6_1',     'label'=>'', 'x'=>110, 'y'=>100, 'w'=>110, 'h'=>94, 'disabled'=>true],
     ['id'=>'lift_6_2',      'label'=>'Lift 2', 'x'=>185, 'y'=>110, 'w'=>39, 'h'=>34],
     ['id'=>'lift_6_1',      'label'=>'Lift 1', 'x'=>185, 'y'=>150, 'w'=>39, 'h'=>34],
-    ['id'=>'empty_6_2',     'label'=>'', 'x'=>355, 'y'=>100, 'w'=>140, 'h'=>94],
-    ['id'=>'staircase_6_3', 'label'=>'Main Stair', 'x'=>350, 'y'=>130, 'w'=>60, 'h'=>34],
-    ['id'=>'room_6_10',     'label'=>'Room', 'x'=>497, 'y'=>100, 'w'=>153, 'h'=>94],
+    ['id'=>'empty_6_2',     'label'=>'', 'x'=>355, 'y'=>100, 'w'=>140, 'h'=>94, 'disabled'=>true],
+    ['id'=>'staircase_6_3', 'label'=>'Middle Staircase', 'x'=>350, 'y'=>130, 'w'=>60, 'h'=>34],
+    ['id'=>'room_6_4',     'label'=>'Multi Purpose Hall', 'x'=>497, 'y'=>100, 'w'=>153, 'h'=>94],
     
 
     // Lower corridor
@@ -270,20 +290,25 @@ $floorRooms = [
 
     // Bottom row 
     ['id'=>'staircase_6_4', 'label'=>'Stair3', 'x'=>8, 'y'=>214, 'w'=>30, 'h'=>72],
-    ['id'=>'room_6_3',      'label'=>'Room', 'x'=>44, 'y'=>214, 'w'=>50, 'h'=>72],
-    ['id'=>'room_6_4',      'label'=>'Room', 'x'=>98, 'y'=>214, 'w'=>50, 'h'=>72],
-    ['id'=>'room_6_5',      'label'=>'Room', 'x'=>152, 'y'=>214, 'w'=>50, 'h'=>72],
-    ['id'=>'room_6_6',      'label'=>'Lecture Theater', 'x'=>204, 'y'=>214, 'w'=>227, 'h'=>72],
-    ['id'=>'room_6_7',      'label'=>'Room', 'x'=>433, 'y'=>214, 'w'=>65, 'h'=>72],
-    ['id'=>'room_6_8',      'label'=>'Room', 'x'=>500, 'y'=>214, 'w'=>114, 'h'=>72],
+    ['id'=>'room_6_5',      'label'=>'LR602', 'x'=>44, 'y'=>214, 'w'=>50, 'h'=>72],
+    ['id'=>'room_6_6',      'label'=>'LR601', 'x'=>98, 'y'=>214, 'w'=>50, 'h'=>72],
+    ['id'=>'room_6_7',      'label'=>'Student Counselling Service', 'x'=>152, 'y'=>214, 'w'=>50, 'h'=>72],
+    ['id'=>'room_6_8',      'label'=>'Lecture Theater', 'x'=>204, 'y'=>214, 'w'=>227, 'h'=>72],
+    ['id'=>'room_6_9',      'label'=>'LR605', 'x'=>433, 'y'=>214, 'w'=>65, 'h'=>72],
+    ['id'=>'room_6_10',      'label'=>'LR606', 'x'=>500, 'y'=>214, 'w'=>114, 'h'=>72],
     ['id'=>'staircase_6_5', 'label'=>'Stair4', 'x'=>620, 'y'=>214, 'w'=>30, 'h'=>72],
   ],
   'Rooftop' => [
-    // Top row
-    ['id'=>'rooftop', 'label'=>'Rooftop', 'x'=>8, 'y'=>8, 'w'=>642, 'h'=>278],
-    ['id'=>'staircase_7_1', 'label'=>'Stair', 'x'=>8, 'y'=>8, 'w'=>30, 'h'=>72],
-    ['id'=>'staircase_7_2', 'label'=>'Stair', 'x'=>620, 'y'=>8, 'w'=>30, 'h'=>72],
-    ['id'=>'staircase_7_3', 'label'=>'Stair', 'x'=>350, 'y'=>240, 'w'=>60, 'h'=>34],
+    ['id'=>'background_7_1', 'label'=>'', 'x'=>8, 'y'=>8, 'w'=>642, 'h'=>278, 'disabled'=>true],
+
+    ['id'=>'staircase_7_1', 'label'=>'Stair1', 'x'=>8, 'y'=>8, 'w'=>30, 'h'=>72],
+    ['id'=>'rooftop_7_1', 'label'=>'Rooftop Outside Seat 1', 'x'=>265, 'y'=>8, 'w'=>90, 'h'=>70],
+    ['id'=>'rooftop_7_2', 'label'=>'Rooftop Outside Seat 2', 'x'=>75, 'y'=>8, 'w'=>90, 'h'=>70],
+    ['id'=>'rooftop_7_3', 'label'=>'Rooftop Inside Seat 1', 'x'=>265, 'y'=>221, 'w'=>110, 'h'=>65],
+    ['id'=>'rooftop_7_4', 'label'=>'Rooftop Inside Seat 2', 'x'=>255, 'y'=>155, 'w'=>130, 'h'=>65],
+    ['id'=>'rooftop_7_5', 'label'=>'Rooftop Barbeque Area', 'x'=>520, 'y'=>8, 'w'=>95, 'h'=>70],
+    ['id'=>'staircase_7_2', 'label'=>'Stair2', 'x'=>620, 'y'=>8, 'w'=>30, 'h'=>72],
+    ['id'=>'staircase_7_3', 'label'=>'Middle Staircase', 'x'=>380, 'y'=>235, 'w'=>45, 'h'=>25],
   ],
 ];
 
@@ -358,13 +383,8 @@ $isUser = isset($_SESSION['user']['role']) && $_SESSION['user']['role'] === 'use
 
   .fm-room-group:hover,
   .fm-room-group.selected {
-    transform: scale(1.06);
+    transform: scale(1.01);
     filter: drop-shadow(0 12px 18px rgba(15, 23, 42, 0.18));
-  }
-
-  .fm-room-group.selected rect {
-    stroke-width: 2.2;
-    stroke-dasharray: 0;
   }
 
   .fm-floor-btn {
@@ -478,7 +498,7 @@ $isUser = isset($_SESSION['user']['role']) && $_SESSION['user']['role'] === 'use
 
   let editingRoom = null;
 
-  let currentFloor = 'Ground Floor'; // Default to Ground Floor
+  let currentFloor = 'Level 2'; // Default to Ground Floor
 
   // ── Helpers ─────────────────────────────────────────────────────────────
   function issueCount(floor)  { return FLOOR_STATS[floor] || 0; }
@@ -581,19 +601,17 @@ $isUser = isset($_SESSION['user']['role']) && $_SESSION['user']['role'] === 'use
         : [room.label];
 
       lines.forEach((text, i) => {
-        const estimatedWidth = text.length * 5.2;
         const availableWidth = room.w - 6;
-        const fontSize = estimatedWidth > availableWidth
-          ? Math.max(5.5, availableWidth / estimatedWidth * 9)
-          : 9;
+        const fontSize = 6.7;
         const offset = lines.length > 1 ? (i ? fontSize * 0.7 : -fontSize * 0.7) : 0;
         const label = svgEl('text', {
           x: room.x + room.w / 2, y: room.y + room.h / 2 + offset,
           'text-anchor': 'middle', 'dominant-baseline': 'middle',
           'font-size': fontSize, 'font-weight': '500', fill: col.text,
-          'pointer-events': 'none'
+          'pointer-events': 'none', class: 'fm-room-label'
         });
         label.textContent = text;
+        label.dataset.maxWidth = availableWidth;
         g.appendChild(label);
       });
     }
@@ -601,7 +619,7 @@ $isUser = isset($_SESSION['user']['role']) && $_SESSION['user']['role'] === 'use
     if (n > 0) {
       const px = room.x + room.w - 10;
       const py = room.y + 10;
-      g.appendChild(svgEl('circle', { cx: px, cy: py, r: 9, fill: col.stroke, class: 'issue-pin' }));
+      g.appendChild(svgEl('circle', { cx: px, cy: py, r: 9, fill: col.stroke }));
 
       const count = svgEl('text', {
         x: px, y: py, 'text-anchor': 'middle', 'dominant-baseline': 'middle',
@@ -619,8 +637,10 @@ $isUser = isset($_SESSION['user']['role']) && $_SESSION['user']['role'] === 'use
       pillWrap.appendChild(pill);
     }
 
+    const isDisabled = room.disabled === true;
+    g.style.cursor = isDisabled ? 'not-allowed' : 'pointer';
     g.addEventListener('mouseenter', () => {
-      if (n === 0 && !IS_ADMIN) return;
+      if (isDisabled || (n === 0 && !IS_ADMIN)) return;
       tooltip.innerHTML = `
         <div class="flex items-center justify-between gap-3 mb-1">
           <strong class="block text-sm font-semibold">${room.label || room.id}</strong>
@@ -632,14 +652,18 @@ $isUser = isset($_SESSION['user']['role']) && $_SESSION['user']['role'] === 'use
       `;
       tooltip.classList.remove('hidden');
     });
+
     g.addEventListener('mousemove', e => {
       const parentRect = svg.parentElement.getBoundingClientRect();
       tooltip.style.left = e.clientX - parentRect.left + 12 + 'px';
       tooltip.style.top = e.clientY - parentRect.top + 12 + 'px';
     });
+
     g.addEventListener('mouseleave', () => tooltip.classList.add('hidden'));
+
     g.addEventListener('click', e => {
       e.stopPropagation();
+      if (isDisabled) return;
       svg.querySelectorAll('.fm-room-group').forEach(el => el.classList.remove('selected'));
       g.classList.add('selected');
       svg.appendChild(g);
@@ -649,18 +673,35 @@ $isUser = isset($_SESSION['user']['role']) && $_SESSION['user']['role'] === 'use
       } else if (IS_USER && room.id) {
         const reportFloor = document.getElementById('floor');
         const reportRoom = document.getElementById('location');
-        const reportRoomInput = document.getElementById('roomSearchInput');
+        const reportRoomSelect = document.getElementById('customRoomDropdown');
 
-        if (!reportFloor || !reportRoom || !reportRoomInput) return;
+        if (!reportFloor || !reportRoom || !reportRoomSelect) return;
 
         reportFloor.value = currentFloor;
         reportFloor.dispatchEvent(new Event('change'));
-        reportRoomInput.value = room.label || room.id;
-        reportRoom.value = room.label || room.id;
+        reportRoomSelect.value = room.label || room.id;
+        reportRoomSelect.dispatchEvent(new Event('change'));
         if (typeof openReportModal === 'function') openReportModal();
       }
     });
     svg.appendChild(g);
+
+    g.querySelectorAll('.fm-room-label').forEach(label => {
+      const maxWidth = Number(label.dataset.maxWidth);
+      if (label.getComputedTextLength() <= maxWidth) return;
+
+      const characters = Array.from(label.textContent);
+      while (characters.length > 0) {
+        characters.pop();
+        label.textContent = `${characters.join('').trimEnd()}...`;
+        if (label.getComputedTextLength() <= maxWidth) return;
+      }
+
+      const ellipsisWidth = label.getComputedTextLength();
+      if (ellipsisWidth > maxWidth) {
+        label.setAttribute('font-size', Math.max(5.5, 9 * maxWidth / ellipsisWidth));
+      }
+    });
   }
 
   function renderFloor() {
@@ -676,7 +717,7 @@ $isUser = isset($_SESSION['user']['role']) && $_SESSION['user']['role'] === 'use
     if (!pillWrap.children.length) {
       const empty = document.createElement('span');
       empty.className = 'text-xs text-gray-400 dark:text-gray-500 py-1';
-      empty.textContent = '✓ No active issues on this floor.';
+      empty.textContent = 'No active issues on this floor.';
       pillWrap.appendChild(empty);
     }
   }
@@ -699,7 +740,12 @@ $isUser = isset($_SESSION['user']['role']) && $_SESSION['user']['role'] === 'use
     const newLabel = labelInput.value.trim();
     if (!newLabel) return;
 
-    const body = `floor=${encodeURIComponent(editingRoom.floor)}&room_id=${encodeURIComponent(editingRoom.id)}&label=${encodeURIComponent(newLabel)}`;
+    const body = new URLSearchParams({
+      floor: editingRoom.floor,
+      room_id: editingRoom.id,
+      label: newLabel
+    }).toString();
+
     fetch('update_room_label.php', {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },

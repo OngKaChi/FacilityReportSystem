@@ -1,6 +1,9 @@
 <?php
 require_once 'auth.php';
 
+define('MAX_ATTEMPTS', 5);
+define('LOCKED_TIME', 30);
+
 if (is_logged_in() || validate_remember_cookie()) {
     $user = $_SESSION['user'];
     $loginRole = $_SESSION['login_role'] ?? $user['role'];
@@ -15,7 +18,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $password = $_POST['password'] ?? '';
     $loginRole = $_POST['login_role'] ?? 'user';
 
-    if ($email === '' || $password === '') {
+    if (isset($_SESSION['locked_until']) && time() < $_SESSION['locked_until']) {
+      $remainingTime = $_SESSION['locked_until'] - time();
+      $error = "Too many failed login attempts. Please try again in $remainingTime seconds.";
+    } elseif ($email === '' || $password === '') {
         $error = 'Please enter both email and password.';
     } elseif (!in_array($loginRole, ['user', 'admin'], true)) {
         $error = 'Please choose a valid login type.';
@@ -33,24 +39,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 if ($isAdminRoute && !$hasAdminPrivilege) {
                     $error = 'This login route is for Head of AFM and AFM Staff only.';
                 } else {
-                    unset($user['password']);
-                    $_SESSION['user'] = $user;
-                    $_SESSION['login_role'] = $loginRole;
+                  unset($_SESSION['login_attempts']);
+                  unset($_SESSION['locked_until']);
 
-                    if (!empty($_POST['remember'])) {
-                        set_remember_cookie($user['id']);
-                    } else {
-                        clear_remember_data($user['id']);
-                    }
+                  unset($user['password']);
+                  $_SESSION['user'] = $user;
+                  $_SESSION['login_role'] = $loginRole;
 
-                    $redirect = $loginRole === 'admin' ? 'admindashboard.php' : 'dashboard.php';
-                    header('Location: ' . $redirect);
-                    exit;
+                  if (!empty($_POST['remember'])) {
+                      set_remember_cookie($user['id']);
+                  } else {
+                      clear_remember_data($user['id']);
+                  }
+
+                  $redirect = $loginRole === 'admin' ? 'admindashboard.php' : 'dashboard.php';
+                  header('Location: ' . $redirect);
+                  exit;
                 }
             }
         }
         if (!$error) {
             $error = 'Invalid email or password.';
+        }
+
+        $_SESSION['login_attempts'] = ($_SESSION['login_attempts'] ?? 0) + 1;
+        if ($_SESSION['login_attempts'] >= MAX_ATTEMPTS) {
+          $_SESSION['locked_until'] = time() + LOCKED_TIME;
+          $error = "Too many failed login attempts. Please try again in 20 seconds.";
         }
         $stmt->close();
     }

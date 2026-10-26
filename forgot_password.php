@@ -60,7 +60,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($sent) {
                 $otpMessage = 'An OTP has been sent to your email address.';
             } else {
-                $otpMessage = 'Unable to send OTP by email. Use this code for now: ' . $otpCode;
+                $otpMessage = 'Unable to send OTP by email. Please try again later.';
             }
         }
     }
@@ -82,7 +82,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($sent) {
                 $otpMessage = 'A new OTP has been sent to your email address.';
             } else {
-                $otpMessage = 'Unable to send OTP by email. Use this code for now: ' . $otpCode;
+                $otpMessage = 'Unable to send OTP by email. Please try again later.';
             }
         }
     }
@@ -210,7 +210,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <label class="block text-sm font-semibold mb-2">Email</label>
     <input type="email" name="email" value="<?php echo htmlspecialchars($pendingReset['email'] ?? $_POST['email'] ?? $_GET['email'] ?? ''); ?>" class="w-full mb-3 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-400" required <?php echo ($otpSent && !$otpVerified) || $otpVerified ? 'readonly' : ''; ?>>
 
-    <?php if (!$otpSent || !$otpVerified): ?>
+    <?php if (!$otpSent && !$otpVerified): ?>
       <p class="text-sm text-slate-500 mb-4">Enter your email and click "Send Verification Code" to receive the reset code.</p>
       <button class="w-full bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 mb-4" type="submit" name="otp_action" value="send">
         Send Verification Code

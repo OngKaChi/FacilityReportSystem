@@ -159,6 +159,27 @@ while ($row = $topResult->fetch_assoc()) {
     $topFaults[] = $row;
 }
 
+$emergencyCases = [];
+if ($view === 'dashboard') {
+    $emergencyCasesResult = $conn->query("
+        SELECT r.*, u_assigned.name AS assigned_name, u_reporter.name AS reporter_name
+        FROM reports r
+        LEFT JOIN users u_assigned ON r.assigned_to = u_assigned.id
+        LEFT JOIN users u_reporter ON r.user_id = u_reporter.id
+        WHERE emergency_tier = 'emergency'
+          AND r.created_at >= CURDATE()
+          AND r.created_at < CURDATE() + INTERVAL 1 DAY
+          AND r.status != 'Resolved'
+        ORDER BY r.created_at DESC
+    ");
+    if (!$emergencyCasesResult) {
+        throw new RuntimeException('Unable to load today\'s emergency cases.');
+    }
+    while ($row = $emergencyCasesResult->fetch_assoc()) {
+        $emergencyCases[] = $row;
+    }
+}
+
 $statusResult = $conn->query("SELECT LOWER(status) AS status, COUNT(*) AS count FROM reports GROUP BY LOWER(status)");
 while ($row = $statusResult->fetch_assoc()) {
     $key = trim($row['status']);
@@ -416,6 +437,46 @@ while ($row = $issueDateResult->fetch_assoc()) {
         </div>
 
         <aside class="space-y-6 order-1 xl:order-2">
+          <article class="rounded-[2rem] bg-white dark:bg-slate-800 p-6 shadow-sm dark:shadow-none dark:border dark:border-slate-700">
+            <div class="flex items-center justify-between gap-4">
+              <div>
+                <p class="text-m uppercase tracking-[0.35em] text-slate-400">Emergency Cases (Today)</p>
+              </div>
+            </div>
+
+            <div class="mt-6">
+              <div class="h-[300px] overflow-y-auto rounded-3xl bg-slate-50 dark:bg-slate-700/50 p-4">
+                <?php if ($emergencyCases): ?>
+                  <div class="space-y-3">
+                    <?php foreach ($emergencyCases as $case): ?>
+                      <button type="button"
+                        onclick="showReportDetails(JSON.parse(this.dataset.report))"
+                        data-report="<?php echo htmlspecialchars(json_encode($case), ENT_QUOTES, 'UTF-8'); ?>"
+                        class="block w-full rounded-2xl bg-white p-4 text-left shadow-sm transition hover:ring-2 hover:ring-rose-300 focus:outline-none focus:ring-2 focus:ring-rose-500 dark:bg-slate-800"
+                        aria-label="View details for <?php echo htmlspecialchars($case['category'] ?: 'emergency report', ENT_QUOTES, 'UTF-8'); ?>">
+                        <div class="flex items-start justify-between gap-3">
+                          <div class="min-w-0">
+                            <p class="font-semibold text-slate-900 dark:text-white"><?php echo htmlspecialchars($case['category'] ?: 'Uncategorized', ENT_QUOTES, 'UTF-8'); ?></p>
+                            <p class="mt-1 truncate text-sm text-slate-500 dark:text-slate-400"><?php echo htmlspecialchars($case['location'] ?: 'Location not specified', ENT_QUOTES, 'UTF-8'); ?></p>
+                          </div>
+                          <span class="shrink-0 rounded-full bg-rose-100 px-2.5 py-1 text-xs font-semibold text-rose-700 dark:bg-rose-900/30 dark:text-rose-300">Emergency</span>
+                        </div>
+                        <div class="mt-3 flex items-center justify-between gap-3 text-xs text-slate-500 dark:text-slate-400">
+                          <span><?php echo htmlspecialchars($case['status'] ?: 'Unknown status', ENT_QUOTES, 'UTF-8'); ?></span>
+                          <time datetime="<?php echo htmlspecialchars($case['created_at'], ENT_QUOTES, 'UTF-8'); ?>"><?php echo date('g:i A', strtotime($case['created_at'])); ?></time>
+                        </div>
+                      </button>
+                    <?php endforeach; ?>
+                  </div>
+                <?php else: ?>
+                  <div class="flex h-full items-center justify-center text-center text-sm text-slate-500 dark:text-slate-400">
+                    No emergency cases reported today.
+                  </div>
+                <?php endif; ?>
+              </div>
+            </div>
+          </article>
+
           <article class="rounded-[2rem] bg-white dark:bg-slate-800 p-6 shadow-sm dark:shadow-none dark:border dark:border-slate-700">
             <div class="flex items-center justify-between gap-4">
               <div>

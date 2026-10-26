@@ -48,7 +48,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $otpSent = true;
             $sent = send_otp_email($email, $otpCode, 'registration');
             if (!$sent) {
-                $otpMessage = 'OTP could not be delivered by email. Use this code for now: ' . $otpCode;
+                $otpMessage = 'OTP could not be delivered by email. Please try again later.';
             }
         }
     }
@@ -71,7 +71,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($sent) {
                 $otpMessage = 'A new OTP has been sent to your email.';
             } else {
-                $otpMessage = 'OTP could not be delivered by email. Use this code for now: ' . $otpCode;
+                $otpMessage = 'OTP could not be delivered by email.Please try again later.';
             }
         }
     }

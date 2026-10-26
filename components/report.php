@@ -56,21 +56,17 @@ while ($row = $dbLabels->fetch_assoc()) {
 
     <!-- Dynamic Room Selection (Pops out when floor is chosen) -->
     <div id="roomSelectionContainer" class="hidden animate-fade-in">
-      <label class="block text-base font-semibold text-gray-800 dark:text-gray-300 mb-3" for="room_id">
+      <label class="block text-base font-semibold text-gray-800 dark:text-gray-300 mb-3" for="customRoomDropdown">
         Specific Room / Area <span class="text-red-500">*</span>
       </label>
-      <div class="relative">
-        <input type="text" id="roomSearchInput" placeholder="Search for a room or click to select..." 
-          class="w-full border-2 border-gray-300 dark:border-slate-600 bg-gray-50 dark:bg-slate-700 dark:text-white px-5 py-4 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-300 text-base cursor-pointer" autocomplete="off" />
-        <div id="customRoomDropdown" class="hidden absolute z-10 w-full mt-1 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-600 rounded-xl shadow-lg max-h-60 overflow-y-auto">
-          <!-- Room options will be injected here by JS -->
-        </div>
-      </div>
+      <select id="customRoomDropdown" class="w-full border-2 border-gray-300 dark:border-slate-600 bg-gray-50 dark:bg-slate-700 dark:text-white px-5 py-4 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-300 text-base" disabled>
+        <option value="">Select a floor first</option>
+      </select>
     </div>
 
     <div id="maintenanceTypeContainer" class="hidden">
-      <label class="block text-base font-semibold text-gray-800 dark:text-gray-300 mb-3" for="maintenance_type">Maintenance Sub-Category</label>
-      <select id="maintenance_type" name="maintenance_type" class="w-full border-2 border-gray-300 dark:border-slate-600 bg-gray-50 dark:bg-slate-700 dark:text-white px-5 py-4 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-300 text-base">
+      <label class="block text-base font-semibold text-gray-800 dark:text-gray-300 mb-3" for="maintenance_type">Maintenance Sub-Category <span class="text-red-500">*</span> </label>
+      <select id="maintenance_type" name="maintenance_type" class="w-full border-2 border-gray-300 dark:border-slate-600 bg-gray-50 dark:bg-slate-700 dark:text-white px-5 py-4 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-300 text-base" required>
         <option value="">Select specific maintenance type</option>
         <option value="Air conditioning">Air conditioning</option>
         <option value="Electrical">Electrical</option>
@@ -104,7 +100,7 @@ while ($row = $dbLabels->fetch_assoc()) {
     </div>
 
     <div>
-      <label class="block text-base font-semibold text-gray-800 dark:text-gray-300 mb-3" for="photo">Photo</label>
+      <label class="block text-base font-semibold text-gray-800 dark:text-gray-300 mb-3" for="photo">Photo </label>
       <div class="relative">
         <input id="photo" name="photo" type="file" accept="image/*" capture="environment" required
           class="w-full text-base text-gray-700 dark:text-slate-300 file:mr-4 file:py-4 file:px-6 file:rounded-xl file:border-0 file:text-base file:font-semibold file:bg-blue-50 dark:file:bg-blue-900/40 file:text-blue-700 dark:file:text-blue-300 hover:file:bg-blue-100 file:cursor-pointer file:transition-colors" />
@@ -135,7 +131,7 @@ const maintenanceTypeSelect = document.getElementById('maintenance_type');
 const floorSelect = document.getElementById('floor');
 const roomContainer = document.getElementById('roomSelectionContainer');
 const locationInput = document.getElementById('location');
-const roomSearchInput = document.getElementById('roomSearchInput');
+const roomSelect = document.getElementById('customRoomDropdown');
 
 // Data passed from PHP
 const roomMapping = <?php echo json_encode($roomMapping); ?>;
@@ -144,7 +140,6 @@ floorSelect.addEventListener('change', function() {
     const floor = this.value;
     const showDoubleParkingOption = ["Basement", "Level 1", "Level 2"].includes(floor);
     const doubleParkingOption = document.getElementById('doubleParkingOption');
-    const dropdown = document.getElementById('customRoomDropdown');
 
     if (showDoubleParkingOption === true) {
         doubleParkingOption.hidden = false;
@@ -156,84 +151,39 @@ floorSelect.addEventListener('change', function() {
         }
     }
 
-    roomSearchInput.value = '';
     locationInput.value = '';
-    dropdown.innerHTML = '';
+    roomSelect.innerHTML = '<option value="">Select a room / area</option>';
+    roomSelect.disabled = !floor;
   
     if (floor && roomMapping[floor]) {
         const labeledRooms = roomMapping[floor].filter(room => room.label && room.label.trim() !== '');
         
         if (labeledRooms.length > 0) {
             labeledRooms.forEach(room => {
-                const item = document.createElement('div');
-                item.textContent = room.label;
-                item.dataset.value = room.label;
-                item.className = 'px-5 py-3 cursor-pointer text-gray-800 dark:text-slate-200 hover:bg-blue-500 hover:text-white dark:hover:bg-blue-600 transition-colors duration-150';
-                
-                item.addEventListener('click', function() {
-                    roomSearchInput.value = this.dataset.value;
-                    locationInput.value = this.dataset.value;
-                    dropdown.classList.add('hidden');
-                });
-                dropdown.appendChild(item);
+                const option = document.createElement('option');
+                option.value = room.label;
+                option.textContent = room.label;
+                roomSelect.appendChild(option);
             });
         } else {
-            const noResults = document.createElement('div');
-            noResults.textContent = 'No rooms defined for this floor.';
-            noResults.className = 'px-5 py-3 text-gray-500 dark:text-gray-400 italic';
-            dropdown.appendChild(noResults);
+            const noRoomsOption = document.createElement('option');
+            noRoomsOption.value = '';
+            noRoomsOption.textContent = 'No rooms defined for this floor';
+            noRoomsOption.disabled = true;
+            roomSelect.appendChild(noRoomsOption);
         }
 
         roomContainer.classList.remove('hidden');
-        locationInput.setAttribute('required', 'required');
+        roomSelect.disabled = false;
+        roomSelect.required = true;
     } else {
         roomContainer.classList.add('hidden');
-        locationInput.removeAttribute('required');
+        roomSelect.required = false;
     }
 });
 
-// --- Custom Dropdown & Search Logic ---
-const dropdown = document.getElementById('customRoomDropdown');
-
-// Show dropdown on focus/click
-roomSearchInput.addEventListener('focus', () => dropdown.classList.remove('hidden'));
-roomSearchInput.addEventListener('click', () => dropdown.classList.remove('hidden'));
-
-// Hide dropdown when clicking outside
-document.addEventListener('click', function(e) {
-    if (!roomContainer.contains(e.target)) {
-        dropdown.classList.add('hidden');
-    }
-});
-
-// Live search filtering
-roomSearchInput.addEventListener('input', function() {
-    const searchTerm = this.value.toLowerCase();
-    const items = dropdown.querySelectorAll('div');
-    let hasResults = false;
-
-    items.forEach(item => {
-        const itemText = item.textContent.toLowerCase();
-        const isVisible = itemText.includes(searchTerm);
-        item.style.display = isVisible ? '' : 'none';
-        if (isVisible) hasResults = true;
-    });
-
-    // Clear selection if user is typing something new
-    if (locationInput.value !== this.value) {
-        locationInput.value = '';
-    }
-
-    // Show "No results" message
-    let noResultsMsg = dropdown.querySelector('.no-results');
-    if (!hasResults && !noResultsMsg) {
-        noResultsMsg = document.createElement('div');
-        noResultsMsg.textContent = 'No matching rooms found.';
-        noResultsMsg.className = 'no-results px-5 py-3 text-gray-500 dark:text-gray-400 italic';
-        dropdown.appendChild(noResultsMsg);
-    } else if (hasResults && noResultsMsg) {
-        noResultsMsg.remove();
-    }
+roomSelect.addEventListener('change', function() {
+    locationInput.value = this.value;
 });
 
 categorySelect.addEventListener('change', function() {

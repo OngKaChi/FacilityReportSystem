@@ -59,33 +59,47 @@ try {
     }
     $duplicateStmt->close();
 
-    // Handle file upload
-    $photo_path = '';
-    if (isset($_FILES['photo']) && $_FILES['photo']['error'] === UPLOAD_ERR_OK) {
-        $target_dir = __DIR__ . '/../uploads/';
-        if (!is_dir($target_dir)) {
-            if (!mkdir($target_dir, 0777, true) && !is_dir($target_dir)) {
-                throw new RuntimeException('Unable to create the upload directory.');
-            }
-        }
-        // Create a unique filename to prevent overwrites
-        $file_info = pathinfo($_FILES["photo"]["name"]);
-        $extension = strtolower($file_info['extension']);
-        $safe_filename = preg_replace('/[^A-Za-z0-9-]/', '_', $file_info['filename']);
-        $target_file = $target_dir . $safe_filename . '_' . time() . '.' . $extension;
-
-        $imageFileType = strtolower(pathinfo($target_file, PATHINFO_EXTENSION));
-
-        // Check if image file is a actual image or fake image
-        $check = @getimagesize($_FILES['photo']['tmp_name']);
-        if ($check === false) {
-            throw new RuntimeException('The uploaded file is not a valid image.');
-        }
-        if (!move_uploaded_file($_FILES['photo']['tmp_name'], $target_file)) {
-            throw new RuntimeException('Unable to save the uploaded photo.');
-        }
-        $photo_path = 'uploads/' . basename($target_file);
+    // Never create a report with an empty photo path when the required upload fails.
+    $photoFile = $_FILES['photo'] ?? null;
+    if (!$photoFile || !isset($photoFile['error'])) {
+        throw new RuntimeException('Photo upload was not received. Please choose the image again and retry.');
     }
+    if ($photoFile['error'] !== UPLOAD_ERR_OK) {
+        $uploadErrors = [
+            UPLOAD_ERR_INI_SIZE => 'The photo exceeds the server upload limit. Please use a smaller image.',
+            UPLOAD_ERR_FORM_SIZE => 'The photo exceeds the allowed upload size.',
+            UPLOAD_ERR_PARTIAL => 'The photo upload was incomplete. Please try again.',
+            UPLOAD_ERR_NO_FILE => 'Please attach a photo before submitting the report.',
+            UPLOAD_ERR_NO_TMP_DIR => 'The server is missing its temporary upload folder.',
+            UPLOAD_ERR_CANT_WRITE => 'The server could not save the uploaded photo.',
+            UPLOAD_ERR_EXTENSION => 'A server extension stopped the photo upload.'
+        ];
+        throw new RuntimeException($uploadErrors[$photoFile['error']] ?? 'The photo could not be uploaded.');
+    }
+
+    $imageInfo = @getimagesize($photoFile['tmp_name']);
+    $imageExtensions = [
+        'image/jpeg' => 'jpg',
+        'image/png' => 'png',
+        'image/gif' => 'gif',
+        'image/webp' => 'webp'
+    ];
+    $mimeType = $imageInfo['mime'] ?? '';
+    if ($imageInfo === false || !isset($imageExtensions[$mimeType])) {
+        throw new RuntimeException('Please upload a valid JPEG, PNG, GIF, or WebP image.');
+    }
+
+    $targetDir = __DIR__ . '/../uploads/';
+    if (!is_dir($targetDir) && !mkdir($targetDir, 0777, true) && !is_dir($targetDir)) {
+        throw new RuntimeException('Unable to create the upload directory.');
+    }
+
+    $filename = bin2hex(random_bytes(16)) . '.' . $imageExtensions[$mimeType];
+    $targetFile = $targetDir . $filename;
+    if (!move_uploaded_file($photoFile['tmp_name'], $targetFile)) {
+        throw new RuntimeException('Unable to save the uploaded photo.');
+    }
+    $photo_path = 'uploads/' . $filename;
 
     $stmt = $conn->prepare("INSERT INTO reports (floor, category, location, description, photo, emergency_tier, status, user_id, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())");
     if (!$stmt) {
@@ -113,7 +127,7 @@ try {
         $adminEmail = $conn->query("SELECT email FROM users WHERE role = 'admin' LIMIT 1");
         $adminEmail = $adminEmail->fetch_assoc()['email'] ?? null;
 
-        $sent = send_notification_email($adminEmail, $newReport, 'New Report Submitted', $emergencyTier);
+        $sent = send_notification_email($adminEmail, $reportId, $category, 'New Report Submitted', $emergencyTier);
 
         echo json_encode(['success' => true, 'report' => $newReport]);
         exit;

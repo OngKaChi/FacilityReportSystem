@@ -18,13 +18,6 @@ $user = $_SESSION['user'] ?? null;
     window.tailwind.config.darkMode = 'class';
 </script>
 
-<div id="pageLoader" class="fixed inset-0 z-[100] hidden items-center justify-center bg-slate-950/40 backdrop-blur-sm">
-  <div class="flex flex-col items-center gap-3 rounded-2xl border border-white/10 bg-white/80 px-6 py-5 shadow-2xl dark:bg-slate-900/80">
-    <div class="h-10 w-10 animate-spin rounded-full border-4 border-slate-200 border-t-blue-600 dark:border-slate-700 dark:border-t-blue-400"></div>
-    <p class="text-sm font-medium text-slate-700 dark:text-slate-200">Loading page...</p>
-  </div>
-</div>
-
 <nav class="sticky top-0 z-50 border-b border-blue-200/20 bg-white/75 backdrop-blur-xl dark:border-slate-700 dark:bg-slate-900/75 text-slate-800 shadow-[0_8px_30px_rgba(15,23,42,0.08)] dark:text-white transition-all duration-300">
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
     <div class="flex items-center justify-between h-16">
@@ -155,48 +148,6 @@ function toggleMenu() {
   const menu = document.getElementById("mobileMenu");
   menu.classList.toggle("hidden");
 }
-
-function showPageLoader() {
-  const loader = document.getElementById('pageLoader');
-  if (loader) {
-    loader.classList.remove('hidden');
-    loader.classList.add('flex');
-  }
-}
-
-function shouldSkipLoader(link) {
-  if (!link || link.target === '_blank' || link.hasAttribute('download')) return true;
-  if (link.protocol && link.protocol !== window.location.protocol) return true;
-  if (link.hostname && link.hostname !== window.location.hostname) return true;
-  if (link.getAttribute('href')?.startsWith('#')) return true;
-  if (link.getAttribute('href')?.startsWith('javascript:')) return true;
-  return false;
-}
-
-document.addEventListener('DOMContentLoaded', function () {
-  const loader = document.getElementById('pageLoader');
-  if (loader) {
-    loader.classList.add('hidden');
-    loader.classList.remove('flex');
-  }
-
-  document.querySelectorAll('a').forEach((link) => {
-    link.addEventListener('click', function (event) {
-      if (shouldSkipLoader(this)) return;
-      const href = this.getAttribute('href');
-      if (!href || href === '#') return;
-      showPageLoader();
-    });
-  });
-
-  document.querySelectorAll('form').forEach((form) => {
-    form.addEventListener('submit', function () {
-      if (this.method && this.method.toLowerCase() === 'get') {
-        showPageLoader();
-      }
-    });
-  });
-});
 
 const themeToggleDarkIcon = document.getElementById('theme-toggle-dark-icon');
 const themeToggleLightIcon = document.getElementById('theme-toggle-light-icon');

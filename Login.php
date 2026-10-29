@@ -65,7 +65,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $_SESSION['login_attempts'] = ($_SESSION['login_attempts'] ?? 0) + 1;
         if ($_SESSION['login_attempts'] >= MAX_ATTEMPTS) {
           $_SESSION['locked_until'] = time() + LOCKED_TIME;
-          $error = "Too many failed login attempts. Please try again in 20 seconds.";
+          $error = "Too many failed login attempts. Please try again in 30 seconds.";
         }
         $stmt->close();
     }

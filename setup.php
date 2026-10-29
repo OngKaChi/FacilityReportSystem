@@ -136,8 +136,12 @@ $conn->query($sql);
 $achievements = [
     ['First Discovery', 'Submitted your first report.', 1, '🌱'],
     ['Active Reporter', 'Submitted 5 reports.', 5, '🌿'],
-    ['Eagle Eye', 'Submitted 10 reports.', 10, '🌳'],
-    ['Facility Legend', 'Submitted 25 reports.', 25, '🍎']
+    ['Facility Inspector', 'Submitted 10 reports.', 10, '🪴'],
+    ['Eagle Eye', 'Submitted 15 reports.', 15, '🌳'],
+    ['Part-Time Reporter', 'Submitted 20 reports.', 20, '🪵'],
+    ['Facility Legend', 'Submitted 25 reports.', 25, '🪓'],
+    ['Facility Overseer', 'Submitted 50 reports.', 50, '🏡'],
+    ['Full-Time Reporter', 'Submitted 100 reports.', 100, '🏰']
 ];
 
 foreach ($achievements as $a) {

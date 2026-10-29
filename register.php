@@ -22,6 +22,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             add_step_error($errors, 'Step 1', 'Please enter your email address before requesting an OTP.');
         } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
             add_step_error($errors, 'Step 1', 'Please enter a valid email address.');
+        } elseif (strpos($email, '@student.newinti.edu.my') === false && strpos($email, '@newinti.edu.my') === false) {
+            add_step_error($errors, 'Step 1', 'Registration is restricted to student and lecturer emails only.');
         }
 
         if (empty($errors)) {
@@ -112,6 +114,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (empty($errors)) {
             if ($name === '' || $password === '') {
                 add_step_error($errors, 'Step 4', 'Please enter a name and password to complete registration.');
+            } 
+            // Password Complexity Rules
+            elseif (strlen($password) < 8 || strlen($password) > 20) {
+                add_step_error($errors, 'Step 4', 'Password must be between 8 and 20 characters long.');
+            } elseif (!preg_match('/[A-Z]/', $password)) {
+                add_step_error($errors, 'Step 4', 'Password must contain at least one uppercase letter.');
+            } elseif (!preg_match('/[a-z]/', $password)) {
+                add_step_error($errors, 'Step 4', 'Password must contain at least one lowercase letter.');
+            } elseif (!preg_match('/[0-9]/', $password)) {
+                add_step_error($errors, 'Step 4', 'Password must contain at least one number.');
+            } elseif (!preg_match('/[^A-Za-z0-9]/', $password)) {
+                add_step_error($errors, 'Step 4', 'Password must contain at least one special character.');
             }
         }
 

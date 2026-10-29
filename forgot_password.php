@@ -139,8 +139,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 add_step_error($errors, 'Please enter and confirm your new password.');
             } elseif ($password !== $confirmPassword) {
                 add_step_error($errors, 'Passwords do not match.');
-            } elseif (strlen($password) < 6) {
-                add_step_error($errors, 'Password must be at least 6 characters.');
+            } elseif (strlen($password) < 8 || strlen($password) > 20) {
+                add_step_error($errors, 'Password must be between 8 and 20 characters.');
+            } elseif (!preg_match('/[A-Z]/', $password)) {
+                add_step_error($errors, 'Password must contain at least one uppercase letter.');
+            } elseif (!preg_match('/[a-z]/', $password)) {
+                add_step_error($errors, 'Password must contain at least one lowercase letter.');
+            } elseif (!preg_match('/[0-9]/', $password)) {
+                add_step_error($errors, 'Password must contain at least one number.');
+            } elseif (!preg_match('/[^A-Za-z0-9]/', $password)) {
+                add_step_error($errors, 'Password must contain at least one special character.');
             }
         }
 

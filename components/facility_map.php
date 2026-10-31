@@ -1,20 +1,4 @@
 <?php
-/**
- * Facility Floor Map Component
- * Drop-in replacement for the "Facility Status Map" section in dashboard.php
- *
- * Requires: $conn (MySQLi connection), $floorStats (array of floor => issue count)
- * 
- * To use in dashboard.php, replace the entire Facility Status Map <div> block with:
- *   <?php include 'components/facility_map.php'; ?>
- *
- * For room-level detail, add a `room` column to your reports table and update
- * the $roomStats query below accordingly.
- */
-
-// ── Floor + Room definitions ────────────────────────────────────────────────
-// Each floor has a list of rooms with SVG coordinates (fit inside 660×220 viewBox).
-// Add/remove rooms to match your actual building layout.
 $floorRooms = [
   'Basement' => [
     ['id'=>'background_0_1', 'label'=>'', 'x'=>8, 'y'=>8, 'w'=>642, 'h'=>278, 'disabled'=>true],
@@ -326,18 +310,21 @@ if ($dbRoomLabels) {
 }
 
 // ── Room-level issue counts from DB ─────────────────────────────────────────
-// If your reports table has a `room` column, use this query.
-// Otherwise, all issues will be distributed to the first room on each floor
-// (just for display — replace with real data as needed).
+// Match report floor/location values to the room labels shown on the map.
 $roomStats = [];
 
-// Build a reverse map from label to room_id for efficient lookup
-
-$roomQuery = $conn->query("SELECT floor, location, COUNT(*) as count FROM reports WHERE status != 'Resolved' GROUP BY floor, location");
+$roomQuery = $conn->query(
+    "SELECT floor, location, SUM(status != 'Resolved') AS active_count
+     FROM reports
+     GROUP BY floor, location"
+);
+if (!$roomQuery) {
+    throw new RuntimeException('Unable to load issue counts for the facility map.');
+}
 while ($r = $roomQuery->fetch_assoc()) {
     $floor = $r['floor'];
     $locationLabel = $r['location'];
-    $count = (int)$r['count'];
+    $activeCount = (int)$r['active_count'];
 
     if (isset($floorRooms[$floor])) {
         // Find all rooms that match the label on that floor
@@ -349,8 +336,7 @@ while ($r = $roomQuery->fetch_assoc()) {
         // In most cases, there will be only one. If there are duplicates, they all get the count.
         foreach ($matchingRooms as $room) {
             $roomId = $room['id'];
-            // Use += to accumulate counts if a room_id somehow gets processed twice.
-            $roomStats[$floor][$roomId] = ($roomStats[$floor][$roomId] ?? 0) + $count;
+            $roomStats[$floor][$roomId] = ($roomStats[$floor][$roomId] ?? 0) + $activeCount;
         }
     }
 }

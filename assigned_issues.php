@@ -80,7 +80,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 $issues = [];
-$issueStatement = $conn->prepare("SELECT DISTINCT r.id, r.category, r.floor, r.location, r.description, r.status, ia.progress_description, r.created_at, ia.assignment_start, ia.assignment_end  FROM reports r LEFT JOIN issue_assignments ia ON ia.report_id = r.id AND ia.staff_id = ? WHERE (ia.staff_id = ? AND CURRENT_DATE BETWEEN ia.assignment_start AND ia.assignment_end) OR (r.assigned_to = ?) ORDER BY r.status = 'Resolved',ia.assignment_end ASC, r.created_at DESC");
+$issueStatement = $conn->prepare("SELECT DISTINCT r.id, r.category, r.floor, r.location, r.description, r.status, ia.progress_description, r.created_at, ia.assignment_start, ia.assignment_end
+    FROM reports r
+    LEFT JOIN issue_assignments ia ON ia.report_id = r.id AND ia.staff_id = ?
+    WHERE ((ia.staff_id = ? AND CURRENT_DATE BETWEEN ia.assignment_start AND ia.assignment_end)
+        OR r.assigned_to = ?)
+      AND r.status IN ('Pending', 'In Progress')
+    ORDER BY ia.assignment_end ASC, r.created_at DESC");
 $issueStatement->bind_param('iii', $userId, $userId, $userId);
 $issueStatement->execute();
 $issueResult = $issueStatement->get_result();
@@ -132,13 +138,13 @@ $issueStatement->close();
           <svg class="h-8 w-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 5H5a2 2 0 00-2 2v10a2 2 0 002 2h14a2 2 0 002-2V9l-6-6H9z M14 3v6h6 M7 13h10M7 17h6"/></svg>
         </div>
         <h2 class="mt-5 text-lg font-bold">No issues assigned today</h2>
-        <p class="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-500 dark:text-slate-400">New assignments will appear here when an administrator schedules work for you.</p>
+        <p class="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-500 dark:text-slate-400">Pending and in-progress assignments will appear here. Resolved issues are no longer shown.</p>
       </section>
     <?php else: ?>
       <section>
         <?php foreach ($issues as $issue):
-          $status = strtolower(trim($issue['status']));
-          $statusClass = $status === 'resolved' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300' : ($status === 'in progress' ? 'bg-sky-100 text-sky-700 dark:bg-sky-950/50 dark:text-sky-300' : 'bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300');
+          $status = trim($issue['status']);
+          $statusClass = $status === 'Resolved' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300' : ($status === 'in progress' ? 'bg-sky-100 text-sky-700 dark:bg-sky-950/50 dark:text-sky-300' : 'bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300');
         ?>
           <article class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
             <div class="flex items-start justify-between gap-4">
@@ -158,18 +164,31 @@ $issueStatement->close();
               <input type="hidden" name="report_id" value="<?php echo (int)$issue['id']; ?>">
               <div class="sm:flex-row sm:items-end">
                 <label for="progress_description-<?php echo (int)$issue['id']; ?>" class="mb-2 block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Progress Description</label>
-                <textarea id="progress_description-<?php echo (int)$issue['id']; ?>" name="progress_description" class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm outline-none focus:border-cyan-500 dark:border-slate-700 dark:bg-slate-800" rows="3"><?php echo htmlspecialchars($issue['progress_description']); ?></textarea>
+                <?php if ($issue['status'] !== 'Resolved'): ?>
+                  <textarea id="progress_description-<?php echo (int)$issue['id']; ?>" name="progress_description" class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm outline-none focus:border-cyan-500 dark:border-slate-700 dark:bg-slate-800" rows="3"><?php echo htmlspecialchars($issue['progress_description']); ?></textarea>
+                <?php else: ?>
+                  <p class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm outline-none focus:border-cyan-500 dark:border-slate-700 dark:bg-slate-800"><?php echo htmlspecialchars($issue['progress_description'] ?? 'No progress description provided.'); ?></p>
+                <?php endif; ?>
               </div>
               <div class="flex-1">
-                <label for="status-<?php echo (int)$issue['id']; ?>" class="mb-2 block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Update status</label>
-                <select id="status-<?php echo (int)$issue['id']; ?>" name="status" class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm outline-none focus:border-cyan-500 dark:border-slate-700 dark:bg-slate-800" required>
-                  <?php foreach (['Pending', 'In Progress', 'Resolved'] as $option): ?>
-                    <option value="<?php echo $option; ?>" <?php echo $issue['status'] === $option ? 'selected' : ''; ?>><?php echo $option === 'Resolved' ? 'Completed' : $option; ?></option>
-                  <?php endforeach; ?>
-                </select>
+                <?php if ($issue['status'] !== 'Resolved'): ?>
+                  <label for="status-<?php echo (int)$issue['id']; ?>" class="mb-2 block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Update status</label>
+                  <select id="status-<?php echo (int)$issue['id']; ?>" name="status" class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm outline-none focus:border-cyan-500 dark:border-slate-700 dark:bg-slate-800" required>
+                    <?php foreach (['Pending', 'In Progress', 'Resolved'] as $option): ?>
+                      <option value="<?php echo $option; ?>" <?php echo $issue['status'] === $option ? 'selected' : ''; ?>><?php echo $option === 'Resolved' ? 'Completed' : $option; ?></option>
+                    <?php endforeach; ?>
+                  </select>
+                <?php else: ?>
+                  <label for="status-<?php echo (int)$issue['id']; ?>" class="mb-2 block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Update status</label>
+                  <p class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm outline-none focus:border-cyan-500 dark:border-slate-700 dark:bg-slate-800">Completed</p>
+                <?php endif; ?>
               </div>
-              <button type="submit" class="rounded-xl bg-cyan-600 px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-cyan-600/20 hover:bg-cyan-500">Save status</button>
-            </form>
+              <?php if ($issue['status'] !== 'Resolved'): ?>
+                <button type="submit" class="rounded-xl bg-cyan-600 px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-cyan-600/20 hover:bg-cyan-500">Save status</button>
+              <?php else: ?>
+                <p class="text-center mt-2 text-xs font-semibold text-slate-500 dark:text-slate-400">This issue has been completed and cannot be updated.</p>
+              <?php endif; ?>
+              </form>
           </article>
         <?php endforeach; ?>
       </section>

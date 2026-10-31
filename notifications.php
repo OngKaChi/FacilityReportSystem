@@ -38,9 +38,38 @@ if ($stmt) {
     $stmt->close();
 }
 
-$resolvedCount = count($notifications);
+$achievementNoti = [];
+if ($user['role'] === 'user') {
+    $achievementNotiStmt = $conn->prepare(
+        "SELECT a.title, a.description, a.icon, ua.earned_at
+         FROM achievements a
+         INNER JOIN user_achievements ua ON a.id = ua.achievement_id
+         WHERE ua.user_id = ?
+         ORDER BY ua.earned_at DESC"
+    );
+    if (!$achievementNotiStmt) {
+        throw new RuntimeException('Unable to prepare the achievement notifications query.');
+    }
+    $achievementNotiStmt->bind_param('i', $userId);
+    if (!$achievementNotiStmt->execute()) {
+        $achievementNotiStmt->close();
+        throw new RuntimeException('Unable to load achievement notifications.');
+    }
+    $achievementResult = $achievementNotiStmt->get_result();
+    while ($row = $achievementResult->fetch_assoc()) {
+        $achievementNoti[] = $row;
+    }
+    $achievementNotiStmt->close();
+}
+
+$updatedCount = count($notifications);
 $newIssuesCount = count($newIssuesNoti);
 $latestNotification = $notifications[0]['updated_at'] ?? null;
+foreach ($achievementNoti as $achievement) {
+    if (!$latestNotification || strtotime($achievement['earned_at']) > strtotime($latestNotification)) {
+        $latestNotification = $achievement['earned_at'];
+    }
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -67,55 +96,37 @@ $latestNotification = $notifications[0]['updated_at'] ?? null;
     ?>
     <main class="min-w-0 flex-1 px-4 py-6 sm:px-6 lg:px-10 md:ml-32">
       <div class="mx-auto max-w-5xl">
-        <section class="dashboard-hero mb-8 overflow-hidden rounded-[2rem] border border-white/10 p-6 text-white shadow-[0_20px_50px_rgba(37,99,235,0.28)]">
-          <div class="flex flex-col gap-5 xl:flex-row xl:items-center xl:justify-between">
-            <div>
-              <p class="text-xs font-bold uppercase tracking-[0.3em] text-cyan-200">Your inbox</p>
-              <h1 class="mt-3 text-3xl font-black tracking-tight sm:text-4xl">Notifications</h1>
-              <p class="mt-3 max-w-xl text-sm leading-6 text-blue-100">Updates about the facility issues you have reported and their resolution.</p>
-            </div>
-            <div class="rounded-2xl border border-white/15 bg-white/10 px-5 py-4 backdrop-blur-sm">
-              <p class="text-xs font-semibold uppercase tracking-[0.18em] text-cyan-100">Total Reports</p>
-              <?php
-              if ($user['role'] === 'user') {
-                echo '<p class="mt-1 text-3xl font-black">' . $resolvedCount . '</p>';
-              } else {
-                echo '<p class="mt-1 text-3xl font-black">' . $newIssuesCount . '</p>';
-              }
-              ?>
-            </div>
-          </div>
-        </section>
 
         <section class="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h2 class="text-xl font-bold text-slate-900 dark:text-white">Completed issue messages</h2>
+            <h2 class="text-xl font-bold text-slate-900 dark:text-white">Your notifications</h2>
             <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">
               <?php if ($latestNotification): ?>
                 Latest update <?php echo htmlspecialchars(date('d M Y, H:i', strtotime($latestNotification))); ?>
               <?php else: ?>
-                Your completed issue updates will appear here.
+                Your issue updates and earned achievements will appear here.
               <?php endif; ?>
             </p>
           </div>
           <select id="notificationFilter" class="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-200 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">
             <option value="all">All messages</option>
-            <option value="recent">Completed in the last 30 days</option>
+            <option value="recent">Last 30 days</option>
           </select>
         </section>
           <?php if ($user['role'] === 'user'): ?>
-            <?php if ($resolvedCount === 0): ?>
+            <?php if ($updatedCount === 0 && count($achievementNoti) === 0): ?>
               <div class="rounded-2xl border border-dashed border-slate-300 bg-white px-6 py-16 text-center shadow-sm dark:border-slate-700 dark:bg-slate-900">
                 <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-cyan-50 text-cyan-600 dark:bg-cyan-950/60 dark:text-cyan-300">
                   <svg class="h-8 w-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M15 17h5l-1.4-1.4A2 2 0 0118 14.2V11a6 6 0 00-12 0v3.2a2 2 0 01-.6 1.4L4 17h5m6 0a3 3 0 11-6 0m6 0H9"/></svg>
                 </div>
                 <h2 class="mt-5 text-lg font-bold text-slate-900 dark:text-white">No updates yet</h2>
-                <p class="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-500 dark:text-slate-400">When one of your reports is completed, the confirmation message will be saved here.</p>
+                <p class="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-500 dark:text-slate-400">Updates about your reports and earned achievements will be saved here.</p>
                 <a href="dashboard.php" class="mt-6 inline-flex rounded-xl bg-cyan-600 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-cyan-600/20 transition hover:bg-cyan-500">View dashboard</a>
                 </div>
             <?php else: ?>
               <div id="notificationList" class="space-y-4">
-                <?php foreach ($notifications as $notification):
+                <?php if ($updatedCount > 0): ?>
+                  <?php foreach ($notifications as $notification):
                     $updatedAt = strtotime($notification['updated_at']);
                     $isRecent = $updatedAt >= strtotime('-30 days');
                 ?>
@@ -147,6 +158,26 @@ $latestNotification = $notifications[0]['updated_at'] ?? null;
                             <span class="rounded-lg bg-sky-50 px-3 py-1.5 text-sky-700 dark:bg-sky-950/50 dark:text-sky-300">In Progress</span>
                           <?php endif; ?>
                         </div>
+                      </div>
+                    </div>
+                  </article>
+                  <?php endforeach; ?>
+                <?php endif; ?>
+                <?php foreach ($achievementNoti as $achievement):
+                    $earnedAt = strtotime($achievement['earned_at']);
+                    $isRecent = $earnedAt >= strtotime('-30 days');
+                ?>
+                  <article class="notification-item group rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-cyan-300 hover:shadow-md dark:border-slate-800 dark:bg-slate-900 dark:hover:border-cyan-700" data-recent="<?php echo $isRecent ? 'true' : 'false'; ?>">
+                    <div class="flex gap-4">
+                      <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-amber-50 text-amber-600 dark:bg-amber-950/50 dark:text-amber-300">
+                        <span class="text-2xl" aria-hidden="true"><?php echo htmlspecialchars($achievement['icon'] ?? '🏆'); ?></span>
+                      </div>
+                      <div class="min-w-0 flex-1">
+                        <div class="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+                          <h3 class="font-bold text-slate-900 dark:text-white">Achievement earned: <?php echo htmlspecialchars($achievement['title']); ?></h3>
+                          <time class="shrink-0 text-xs font-medium text-slate-400" datetime="<?php echo htmlspecialchars($achievement['earned_at']); ?>"><?php echo htmlspecialchars(date('d M Y, H:i', $earnedAt)); ?></time>
+                        </div>
+                        <p class="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300"><?php echo htmlspecialchars($achievement['description']); ?></p>
                       </div>
                     </div>
                   </article>

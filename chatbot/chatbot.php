@@ -1,7 +1,51 @@
 <?php
 header('Content-Type: application/json');
+require_once __DIR__ . '/../auth.php';
 require_once __DIR__ . '/../config.php';
 
+if (!is_logged_in() && !validate_remember_cookie()) {
+    http_response_code(401);
+    echo json_encode(['reply' => 'Please log in to use the assistant.']);
+    exit;
+}
+
+define('CHATBOT_MAX_REQUESTS', 5);
+define('CHATBOT_RATE_LIMIT_WINDOW', 30);
+
+$now = time();
+$rateLimit = $_SESSION['chatbot_rate_limit'] ?? [
+    'window_started_at' => $now,
+    'requests' => 0,
+];
+
+if (
+    !is_array($rateLimit)
+    || !isset($rateLimit['window_started_at'], $rateLimit['requests'])
+    || !is_int($rateLimit['window_started_at'])
+    || !is_int($rateLimit['requests'])
+    || $now - $rateLimit['window_started_at'] >= CHATBOT_RATE_LIMIT_WINDOW
+) {
+    $rateLimit = [
+        'window_started_at' => $now,
+        'requests' => 0,
+    ];
+}
+
+if ($rateLimit['requests'] >= CHATBOT_MAX_REQUESTS) {
+    $retryAfter = max(
+        1,
+        $rateLimit['window_started_at'] + CHATBOT_RATE_LIMIT_WINDOW - $now
+    );
+    header('Retry-After: ' . $retryAfter);
+    http_response_code(429);
+    echo json_encode([
+        'reply' => "Too many assistant requests. Please try again in {$retryAfter} seconds.",
+    ]);
+    exit;
+}
+
+$rateLimit['requests']++;
+$_SESSION['chatbot_rate_limit'] = $rateLimit;
 
 // Get the raw POST data from the JavaScript frontend
 $input = json_decode(file_get_contents('php://input'), true);
@@ -53,19 +97,43 @@ $data = [
                - Step 3: Because this cannot be resolved by the user, immediately say: 'Please submit a report with the details.'
 
             Emergency Tier Classification:
-            - Normal: Non-urgent issues that do not pose immediate risk or danger.
-            - Urgent: Issues that require prompt attention but do not pose immediate danger.
-            - Emergency: Issues that pose immediate risk or danger and require immediate action.
-            
+            - Normal (4 - 10days): Non-urgent issues that do not pose immediate risk or danger.
+            - Urgent (1 - 3days): Issues that require prompt attention but do not pose immediate danger.
+            - Emergency (immediately): Issues that pose immediate risk or danger and require immediate action.
+
             Operational Rules:
             - If the user's issue does not fit one of these three types, politely inform them that you can only help with Broken Equipment, Maintenance, Double Parking or Emergency Tiers.
             - Always prioritize user safety. Never suggest an unsafe DIY fix.
             - Keep responses highly focused, punchy, and professional. Use Markdown bold text for key details.
+            - Return a report draft when the user has described a reportable issue that requires staff attention. Leave unknown report fields null; do not invent details. Do not return a draft for general questions or issues that can safely be resolved by the user.
+            - The draft floor must be one of: Rooftop, Level 6, Level 5, Level 4, Level 3, Level 2, Level 1, Basement. The location should be the specific room or area the user gave. Use only these categories: Broken Equipment, Maintenance, Double Parking. For Maintenance, use one of: Air conditioning, Electrical, General work order, Plumbing, Repairing.
+            - Classify emergency_tier as Normal, Urgent, or Emergency based on the described risk. Include the user's issue details in description. Use null when the user has not provided enough information for a field.
             "]
         ]
     ],
     "generation_config" => [
-        "temperature" => 0.3
+        "temperature" => 0.3,
+        "response_mime_type" => "application/json",
+        "response_schema" => [
+            "type" => "OBJECT",
+            "properties" => [
+                "reply" => ["type" => "STRING"],
+                "draft" => [
+                    "type" => "OBJECT",
+                    "nullable" => true,
+                    "properties" => [
+                        "floor" => ["type" => "STRING", "nullable" => true, "enum" => ["Rooftop", "Level 6", "Level 5", "Level 4", "Level 3", "Level 2", "Level 1", "Basement"]],
+                        "category" => ["type" => "STRING", "nullable" => true, "enum" => ["Broken Equipment", "Maintenance", "Double Parking"]],
+                        "maintenance_type" => ["type" => "STRING", "nullable" => true, "enum" => ["Air conditioning", "Electrical", "General work order", "Plumbing", "Repairing"]],
+                        "emergency_tier" => ["type" => "STRING", "nullable" => true, "enum" => ["Normal", "Urgent", "Emergency"]],
+                        "location" => ["type" => "STRING", "nullable" => true],
+                        "description" => ["type" => "STRING", "nullable" => true],
+                    ],
+                    "required" => ["floor", "category", "maintenance_type", "emergency_tier", "location", "description"],
+                ],
+            ],
+            "required" => ["reply", "draft"],
+        ],
     ]
 ];
 
@@ -141,7 +209,23 @@ if (isset($responseData['error'])) {
     exit;
 }
 
-$replyText = $responseData['candidates'][0]['content']['parts'][0]['text'] ?? 'System Error: Couldn\'t parse text payload.';
+$modelContent = $responseData['candidates'][0]['content']['parts'][0]['text'] ?? null;
+$assistantData = is_string($modelContent) ? json_decode($modelContent, true) : null;
 
-echo json_encode(['reply' => $replyText]);
+if (
+    !is_array($assistantData)
+    || !isset($assistantData['reply'])
+    || !is_string($assistantData['reply'])
+    || (isset($assistantData['draft']) && $assistantData['draft'] !== null && !is_array($assistantData['draft']))
+) {
+    http_response_code(502);
+    echo json_encode(['reply' => 'System Error: The assistant returned an invalid response.']);
+    exit;
+}
+
+echo json_encode([
+    'reply' => $assistantData['reply'],
+    'draft' => $assistantData['draft'] ?? null,
+    'history_content' => $modelContent,
+]);
 ?>

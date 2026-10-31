@@ -650,8 +650,16 @@ function appendMessage(text, role) {
     msgBubble.className = "bg-gray-100 dark:bg-slate-700 text-gray-800 dark:text-slate-100 rounded-2xl rounded-tl-none p-3 max-w-[85%] text-sm shadow-sm border border-gray-200/50 dark:border-slate-600/50";
   }
   
-  // Renders Gemini's markdown bold text **like this** into regular bold HTML tags
-  msgBubble.innerHTML = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+  const parts = text.split(/(\*\*.*?\*\*)/g);
+  parts.forEach(part => {
+    if (part.startsWith('**') && part.endsWith('**')) {
+      const strong = document.createElement('strong');
+      strong.textContent = part.slice(2, -2);
+      msgBubble.appendChild(strong);
+    } else {
+      msgBubble.appendChild(document.createTextNode(part));
+    }
+  });
   
   msgWrapper.appendChild(msgBubble);
   chatMessages.appendChild(msgWrapper);
@@ -660,9 +668,12 @@ function appendMessage(text, role) {
   chatMessages.scrollTop = chatMessages.scrollHeight;
 }
 
+let chatRequestInProgress = false;
+
 async function sendMessage() {
   const text = chatInput.value.trim();
-  if (!text) return;
+  if (!text || chatRequestInProgress) return;
+  chatRequestInProgress = true;
 
   // 1. Display user message in the modal
   appendMessage(text, 'user');
@@ -675,7 +686,7 @@ async function sendMessage() {
   });
 
   try {
-    // 3. Send history payload to your XAMPP chatbot.php file
+    // 3. Send history payload to chatbot.php file
     const response = await fetch('chatbot/chatbot.php', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -683,20 +694,27 @@ async function sendMessage() {
     });
     
     const data = await response.json();
-    let aiReply = data.reply;
+    if (!response.ok || typeof data.reply !== 'string') {
+      throw new Error(data.reply || 'The assistant could not process this request.');
+    }
 
-
-    // 5. Render the AI's reply bubble
-    appendMessage(aiReply, 'model');
-
-    // 6. Keep the AI's response in history memory
+    appendMessage(data.reply, 'model');
     chatHistory.push({
       "role": "model",
-      "parts": [{ "text": aiReply }]
+      "parts": [{ "text": data.history_content || JSON.stringify({ reply: data.reply, draft: data.draft ?? null }) }]
     });
 
+    if (data.draft && typeof data.draft === 'object' && typeof window.populateReportDraft === 'function') {
+      window.populateReportDraft(data.draft);
+      appendMessage("I've added the details I could identify to the report form. Please review the fields, choose a photo, and complete anything missing.", 'model');
+      closeChatbotModal();
+      setTimeout(openReportModal, 220);
+    }
+
   } catch (error) {
-    appendMessage("System Error: Unable to connect to the assistant server.", 'model');
+    appendMessage(error.message || "System Error: Unable to connect to the assistant server.", 'model');
+  } finally {
+    chatRequestInProgress = false;
   }
 }
 
@@ -757,13 +775,6 @@ function addMessage(text, sender) {
   messagesDiv.scrollTop = messagesDiv.scrollHeight;
 }
 
-// Enter key for chat input
-document.getElementById('chatInput').addEventListener('keypress', function(e) {
-  if (e.key === 'Enter') {
-    sendMessage();
-  }
-});
-
 // Handle asynchronous report form submission
 document.addEventListener('DOMContentLoaded', function() {
     const reportForm = document.getElementById('reportForm');
@@ -773,11 +784,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
             const formData = new FormData(reportForm);
             const submitButton = reportForm.querySelector('button[type="submit"]');
-            const originalButtonText = submitButton.innerHTML;
 
-            // Disable button and show loading state
+            // Disable button
             submitButton.disabled = true;
-            submitButton.innerHTML = 'Submitting...';
 
             fetch('components/submit_report.php', {
                 method: 'POST',
@@ -806,7 +815,6 @@ document.addEventListener('DOMContentLoaded', function() {
               alert('Unable to submit the report: ' + error.message);
                 // Restore button on error
                 submitButton.disabled = false;
-                submitButton.innerHTML = originalButtonText;
             });
         });
     }

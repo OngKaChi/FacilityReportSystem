@@ -29,8 +29,8 @@ define('MAIL_DEBUG_TO_FILE', false);
 // SMTP configuration for PHPMailer/Gmail.
 // Use a Google App Password if your account has 2-step verification enabled.
 $smtpHost = 'smtp.gmail.com';
-$smtpUser = // Your Gmail address;
-$smtpPass = // Your Gmail App Password;
+$smtpUser = ''; // Your Gmail address here
+$smtpPass = ''; // Your Gmail App Password here
 $smtpSecure = 'tls';
 $smtpPort = 587;
 $smtpFrom = 'no-reply@yourdomain.com';
@@ -52,11 +52,10 @@ function current_user() {
 
 function require_login($role = null) {
     if (!is_logged_in()) {
-        if (validate_remember_cookie()) {
-            return;
+        if (!validate_remember_cookie()) {
+            header("Location: Login.php");
+            exit;
         }
-        header("Location: Login.php");
-        exit;
     }
     if ($role) {
         $userRole = $_SESSION['user']['role'] ?? '';

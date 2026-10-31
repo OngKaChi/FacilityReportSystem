@@ -1393,9 +1393,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
-                        closeEditModal();
-                        updateReportRow(data.report);
-                        // Optionally, you can show a success notification here
+                        window.location.reload();
                     } else {
                         alert('Error: ' + (data.error || 'Could not update report.'));
                     }

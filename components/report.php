@@ -204,6 +204,31 @@ categorySelect.addEventListener('change', function() {
   }
 });
 
+window.populateReportDraft = function(draft) {
+  const setSelectValue = function(select, value) {
+    if (select.value || typeof value !== 'string' || !value) return false;
+    const option = Array.from(select.options).find(function(item) {
+      return item.value.toLowerCase() === value.trim().toLowerCase();
+    });
+    if (!option) return false;
+    select.value = option.value;
+    select.dispatchEvent(new Event('change', { bubbles: true }));
+    return true;
+  };
+
+  if (draft.floor) setSelectValue(floorSelect, draft.floor);
+  if (draft.category) setSelectValue(categorySelect, draft.category);
+  if (draft.maintenance_type) setSelectValue(maintenanceTypeSelect, draft.maintenance_type);
+  if (draft.emergency_tier && categorySelect.value !== 'Double Parking') {
+    setSelectValue(emergencyTierSelect, draft.emergency_tier);
+  }
+  if (draft.location) setSelectValue(roomSelect, draft.location);
+  const descriptionInput = document.getElementById('description');
+  if (!descriptionInput.value && typeof draft.description === 'string' && draft.description.trim()) {
+    descriptionInput.value = draft.description.trim();
+  }
+};
+
 photoInput.addEventListener('change', function () {
   const file = this.files && this.files[0];
   if (!file) {

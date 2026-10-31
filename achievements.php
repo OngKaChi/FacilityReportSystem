@@ -24,6 +24,14 @@ $result = $conn->query($sql);
 <body class="bg-gray-100 dark:bg-slate-900 transition-colors duration-300 min-h-screen">
 
 <?php include 'components/navbar.php'; ?>
+  <div class="flex min-h-[calc(100vh-4rem)]">
+    <?php
+      if ($user['role'] === 'admin' || $user['role'] === 'helper') {
+          include 'components/admin_sidebar.php';
+      } else {
+          include 'components/sidebar.php';
+      }
+    ?>
 
 <div class="max-w-5xl mx-auto p-6">
   <div class="mb-8">

@@ -180,22 +180,6 @@ function send_otp_email($email, $code, $purpose = 'verification', $link = null) 
                ($link ? "Please complete your setup here: {$link}\n\n" : "") .
                "This code expires in 10 minutes. If you did not request this, please ignore this email.";
 
-    // --- BYPASS LOGIC: Save to local file if in Debug Mode ---
-    if (defined('MAIL_DEBUG_TO_FILE') && MAIL_DEBUG_TO_FILE === true) {
-        $logDir = __DIR__ . '/mail_log';
-        if (!is_dir($logDir)) {
-            mkdir($logDir, 0777, true);
-        }
-        $filename = $logDir . '/otp_' . time() . '_' . str_replace(['@', '.'], '_', $email) . '.txt';
-        $content = "TO: $email\nSUBJECT: $subject\nDATE: " . date('Y-m-d H:i:s') . "\n\n$message";
-        
-        if (file_put_contents($filename, $content)) {
-            // We return true so the application thinks the email was "sent"
-            error_log("MAIL_DEBUG: Email to $email bypassed and saved to $filename");
-            return true;
-        }
-    }
-
     // Use PHPMailer if available (Highly Recommended)
     if (class_exists('PHPMailer\PHPMailer\PHPMailer')) {
         $mail = new \PHPMailer\PHPMailer\PHPMailer(true);
@@ -289,22 +273,6 @@ function send_notification_email($email, $reportId, $case, $purpose = 'notify', 
         $message = "$text:\n\n" . "You can safely ignore this email.";
     }
 
-    // --- BYPASS LOGIC: Save to local file if in Debug Mode ---
-    if (defined('MAIL_DEBUG_TO_FILE') && MAIL_DEBUG_TO_FILE === true) {
-        $logDir = __DIR__ . '/mail_log';
-        if (!is_dir($logDir)) {
-            mkdir($logDir, 0777, true);
-        }
-        $filename = $logDir . '/otp_' . time() . '_' . str_replace(['@', '.'], '_', $email) . '.txt';
-        $content = "TO: $email\nSUBJECT: $subject\nDATE: " . date('Y-m-d H:i:s') . "\n\n$message";
-        
-        if (file_put_contents($filename, $content)) {
-            // We return true so the application thinks the email was "sent"
-            error_log("MAIL_DEBUG: Email to $email bypassed and saved to $filename");
-            return true;
-        }
-    }
-
     // Use PHPMailer if available (Highly Recommended)
     if (class_exists('PHPMailer\PHPMailer\PHPMailer')) {
         $mail = new \PHPMailer\PHPMailer\PHPMailer(true);
@@ -370,22 +338,6 @@ function send_notification_email_to_staff($email, $subject, $message) {
         </div>";
     $subject = "New Case Assigned";
     $message = "$text:\n\n" . "You can safely ignore this email.";
-
-    // --- BYPASS LOGIC: Save to local file if in Debug Mode ---
-    if (defined('MAIL_DEBUG_TO_FILE') && MAIL_DEBUG_TO_FILE === true) {
-        $logDir = __DIR__ . '/mail_log';
-        if (!is_dir($logDir)) {
-            mkdir($logDir, 0777, true);
-        }
-        $filename = $logDir . '/otp_' . time() . '_' . str_replace(['@', '.'], '_', $email) . '.txt';
-        $content = "TO: $email\nSUBJECT: $subject\nDATE: " . date('Y-m-d H:i:s') . "\n\n$message";
-        
-        if (file_put_contents($filename, $content)) {
-            // We return true so the application thinks the email was "sent"
-            error_log("MAIL_DEBUG: Email to $email bypassed and saved to $filename");
-            return true;
-        }
-    }
 
     // Use PHPMailer if available (Highly Recommended)
     if (class_exists('PHPMailer\PHPMailer\PHPMailer')) {

@@ -127,7 +127,7 @@ try {
         $adminEmail = $conn->query("SELECT email FROM users WHERE role = 'admin' LIMIT 1");
         $adminEmail = $adminEmail->fetch_assoc()['email'] ?? null;
 
-        $sent = send_notification_email($adminEmail, $reportId, $category, 'New Report Submitted', $emergencyTier);
+        $sent = send_notification_email($adminEmail, $reportId, $category, 'the Report List', $emergencyTier);
 
         echo json_encode(['success' => true, 'report' => $newReport]);
         exit;

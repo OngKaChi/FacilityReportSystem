@@ -129,7 +129,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <div class="mb-4 rounded-xl bg-red-100 border border-red-300 p-4 text-red-700"><?php echo htmlspecialchars($error); ?></div>
   <?php endif; ?>
 
-  <form method="POST" action="Login.php">
+  <form id="login-form" method="POST" action="Login.php">
     <label class="block text-sm font-semibold mb-2 justify-center items-center" >Login As</label>
     <div class="toggle-switch mb-4">
       <input id="role-user" type="radio" name="login_role" value="user" <?php echo (($_POST['login_role'] ?? 'user') === 'user' ? 'checked' : ''); ?> />
@@ -157,5 +157,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <a href="forgot_password.php" class="text-blue-500 hover:underline">Forgot password</a>
   </div>
 </div>
+<script>
+  window.addEventListener('pageshow', function () {
+    const navigation = performance.getEntriesByType('navigation')[0];
+    if (navigation && navigation.type === 'reload') {
+      document.getElementById('login-form').reset();
+      document.querySelector('input[name="email"]').value = '';
+      document.querySelector('input[name="password"]').value = '';
+      document.querySelector('input[name="login_role"][value="user"]').checked = true;
+    }
+  });
+</script>
 </body>
 </html>

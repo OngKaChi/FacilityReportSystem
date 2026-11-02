@@ -145,10 +145,6 @@ if ($reportsResult) {
     $recentReports = $reportsResult;
 }
 
-$helpers = [];
-$helperRes = $conn->query("SELECT id, name FROM users WHERE role = 'helper'");
-while($h = $helperRes->fetch_assoc()) $helpers[] = $h;
-
 $categoryResult = $conn->query("SELECT category, COUNT(*) AS count FROM reports GROUP BY category ORDER BY count DESC");
 while ($row = $categoryResult->fetch_assoc()) {
     $categoryCounts[] = $row;
@@ -595,9 +591,7 @@ while ($row = $issueDateResult->fetch_assoc()) {
       <section class="rounded-[2rem] bg-white dark:bg-slate-800 p-6 shadow-sm dark:shadow-none dark:border dark:border-slate-700">
         <div class="flex flex-col gap-5">
           <div>
-            <h2 class="mt-2 text-2xl font-semibold dark:text-white">
-              <?php echo $view === 'Reports' ? 'All Reported Cases' : 'Recent Reported Cases'; ?>
-            </h2>
+            <h2 class="mt-2 text-2xl font-semibold dark:text-white">All Reported Cases</h2>
           </div>
           <form method="get" action="admindashboard.php">
             <input type="hidden" name="view" value="reports">
@@ -878,10 +872,6 @@ while ($row = $issueDateResult->fetch_assoc()) {
 window.seenReportsStorageKey = 'facilitySystemSeenReports_<?php echo (int)$_SESSION['user']['id']; ?>_<?php echo htmlspecialchars($_SESSION['user']['role'] ?? 'admin', ENT_QUOTES); ?>';
 window.latestReportId = <?php echo $latestReportId; ?>;
 
-// Inject helpers into global scope for the modal
-window.adminHelpers = <?php echo json_encode($helpers); ?>;
-window.allReportsData = <?php echo json_encode($recentReports ? $recentReports->fetch_all(MYSQLI_ASSOC) : []); ?>;
-window.currentUserRole = '<?php echo $_SESSION['user']['role']; ?>';
 window.allLatestUpdates = <?php echo json_encode($allLatestUpdates); ?>;
 </script>
 
@@ -890,7 +880,6 @@ const barLabels = <?php echo json_encode($barLabels); ?>;
 const barData = <?php echo json_encode($barData); ?>;
 const dailyCountsByDate = <?php echo json_encode($dailyCounts); ?>;
 const categoryLabels = <?php echo json_encode(array_column($categoryCounts, 'category')); ?>;
-const categoryCounts = <?php echo json_encode(array_map('intval', array_column($categoryCounts, 'count'))); ?>;
 const categoryColors = <?php echo json_encode(array_map(function($index) {
     $palette = ['#f97316','#0ea5e9','#22c55e','#a855f7','#facc15','#ec4899','#f87171'];
     return $palette[$index % count($palette)];
@@ -1409,34 +1398,6 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
     });
-
-    function updateReportRow(report) {
-        const row = document.querySelector(`tr[data-description][onclick*='"id":"${report.id}"']`);
-        if (!row) return;
-
-        // Update data attributes
-        row.setAttribute('onclick', `showReportDetails(${JSON.stringify(report)})`);
-        row.setAttribute('data-description', (report.description || '').toLowerCase());
-        row.setAttribute('data-status', report.status);
-
-        // Update cell content
-        const cells = row.getElementsByTagName('td');
-        cells[0].innerHTML = `<span class="rounded-full bg-slate-100 dark:bg-slate-700 px-3 py-1 text-slate-700 dark:text-slate-300 text-xs">${report.category}</span>`;
-        cells[3].textContent = report.description;
-        cells[4].textContent = report.assigned_name || 'Unassigned';
-
-        let statusClass = 'bg-slate-100 text-slate-700';
-        if (report.status.toLowerCase() === 'pending') statusClass = 'bg-amber-100 text-amber-700';
-        else if (report.status.toLowerCase() === 'resolved') statusClass = 'bg-emerald-100 text-emerald-700';
-        else if (report.status.toLowerCase().includes('progress')) statusClass = 'bg-sky-100 text-sky-700';
-        const displayStatus = report.status === 'Resolved' ? 'Completed' : report.status;
-        cells[5].innerHTML = `<span class="rounded-full ${statusClass} px-3 py-1 text-xs">${displayStatus}</span>`;
-
-        // Re-apply completed class if needed
-        row.classList.toggle('bg-gray-50', report.status.toLowerCase() === 'resolved');
-        row.classList.toggle('dark:bg-slate-700/50', report.status.toLowerCase() === 'resolved');
-    }
-
 
 (() => {
   let checkingForReports = false;

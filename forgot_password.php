@@ -7,20 +7,9 @@ $otpSent = false;
 $otpVerified = false;
 $otpMessage = '';
 $pendingReset = $_SESSION['pending_password_reset'] ?? null;
-if ($pendingReset) {
-    $otpVerified = !empty($pendingReset['otp_verified']);
-    $otpSent = true;
-}
 
-// Check if email is provided via GET (invitation link)
-if (!$otpSent && !empty($_GET['email'])) {
-    $otpSent = true;
-    $otpMessage = 'Enter the OTP code sent to your email to set your password.';
-}
-
-
-function add_step_error(&$errors, $step, $message) {
-    $errors[] = "{$step}: {$message}";
+function add_step_error(&$errors, $message) {
+    $errors[] = $message;
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -54,12 +43,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'otp_expires' => $expiresAt,
                 'otp_verified' => false,
             ];
-            $pendingReset = $_SESSION['pending_password_reset'];
             $otpSent = true;
             $sent = send_otp_email($email, $otpCode, 'password reset');
-            if ($sent) {
-                $otpMessage = 'An OTP has been sent to your email address.';
-            } else {
+            if (!$sent) {
                 $otpMessage = 'Unable to send OTP by email. Please try again later.';
             }
         }
@@ -76,7 +62,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $_SESSION['pending_password_reset']['otp_code'] = $otpCode;
             $_SESSION['pending_password_reset']['otp_expires'] = $expiresAt;
             $_SESSION['pending_password_reset']['otp_verified'] = false;
-            $pendingReset = $_SESSION['pending_password_reset'];
+            
             $otpSent = true;
             $sent = send_otp_email($pendingReset['email'], $otpCode, 'password reset');
             if ($sent) {
@@ -92,33 +78,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $email = trim($_POST['email'] ?? '');
         $pendingReset = $_SESSION['pending_password_reset'] ?? null;
 
-        if ($otpCode === '') {
+        if (!$pendingReset) {
+            add_step_error($errors, 'No pending password reset found. Please request an OTP first.');
+        } elseif ($otpCode === '') {
             add_step_error($errors, 'Please enter the OTP code.');
-        } else {
-            // If session exists, check session first
-            if ($pendingReset && $otpCode === $pendingReset['otp_code']) {
-                if (time() > $pendingReset['otp_expires']) {
-                    add_step_error($errors, 'This OTP has expired. Please request a new one.');
-                }
-            } else {
-                // Otherwise, check the database (this allows links from emails to work)
-                $stmt = $conn->prepare("SELECT id FROM users WHERE email = ? LIMIT 1");
-                $stmt->bind_param('s', $email);
-                $stmt->execute();
-                $u = $stmt->get_result()->fetch_assoc();
-                if ($u && verify_user_otp($u['id'], $otpCode)) {
-                    // Validated via DB, now create the session so the next step works
-                    $_SESSION['pending_password_reset'] = ['email' => $email];
-                } else {
-                    add_step_error($errors, 'Incorrect or expired OTP code.');
-                }
-                if ($stmt) $stmt->close();
-            }
+        } elseif ($otpCode !== $pendingReset['otp_code']) {
+            add_step_error($errors, 'Incorrect OTP code.');
+        } elseif (time() > $pendingReset['otp_expires']) {
+            add_step_error($errors, 'The OTP code has expired. Please request a new one.');
         }
 
         if (empty($errors)) {
             $_SESSION['pending_password_reset']['otp_verified'] = true;
-            $pendingReset = $_SESSION['pending_password_reset'];
             $otpVerified = true;
             $otpSent = true;
             $otpMessage = 'OTP verified. Enter a new password to complete the reset.';
@@ -142,13 +113,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             } elseif (strlen($password) < 8 || strlen($password) > 20) {
                 add_step_error($errors, 'Password must be between 8 and 20 characters.');
             } elseif (!preg_match('/[A-Z]/', $password)) {
-                add_step_error($errors, 'Password must contain at least one uppercase letter.');
+                add_step_error($errors, 'Password must contain at least one uppercase letter. (A-Z)' );
             } elseif (!preg_match('/[a-z]/', $password)) {
-                add_step_error($errors, 'Password must contain at least one lowercase letter.');
+                add_step_error($errors, 'Password must contain at least one lowercase letter. (a-z)');
             } elseif (!preg_match('/[0-9]/', $password)) {
-                add_step_error($errors, 'Password must contain at least one number.');
+                add_step_error($errors, 'Password must contain at least one number. (0-9)');
             } elseif (!preg_match('/[^A-Za-z0-9]/', $password)) {
-                add_step_error($errors, 'Password must contain at least one special character.');
+                add_step_error($errors, 'Password must contain at least one special character. (!@#$%^&*)');
             }
         }
 
@@ -168,6 +139,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 }
+
+if ($pendingReset && time() <= $pendingReset['otp_expires']) {
+    $otpSent = true;
+
+    if (!empty($pendingReset['otp_verified'])) {
+        $otpVerified = true;
+    }
+} else {
+    if ($pendingReset) {
+        unset($_SESSION['pending_password_reset']);
+        $pendingReset = null;
+    }
+}
+
+$showRequestOtp = !$otpSent && !$otpVerified;
+$showOtpSection = $otpSent && !$otpVerified;
+$showCompleteSection = $otpVerified;
 ?>
 <!DOCTYPE html>
 <html>
@@ -218,20 +206,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <label class="block text-sm font-semibold mb-2">Email</label>
     <input type="email" name="email" value="<?php echo htmlspecialchars($pendingReset['email'] ?? $_POST['email'] ?? $_GET['email'] ?? ''); ?>" class="w-full mb-3 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-400" required <?php echo ($otpSent && !$otpVerified) || $otpVerified ? 'readonly' : ''; ?>>
 
-    <?php if (!$otpSent && !$otpVerified): ?>
-      <p class="text-sm text-slate-500 mb-4">Enter your email and click "Send Verification Code" to receive the reset code.</p>
+    <?php if ($showRequestOtp): ?>
+      <p class="text-sm text-slate-500 mb-4">Enter your email and click "Send Verification Code" to receive the OTP code.</p>
       <button class="w-full bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 mb-4" type="submit" name="otp_action" value="send">
         Send Verification Code
       </button>
     <?php endif; ?>
 
-    <?php if (($otpSent && !$otpVerified) || $otpVerified): ?>
-      <div class="mb-4 rounded-xl bg-blue-50 border border-blue-200 p-4 text-blue-700">
-        <p class="text-sm mb-2"><?php echo htmlspecialchars($otpMessage ?: 'Enter the OTP sent to your email address.'); ?></p>
-      </div>
+    <?php if ($showOtpSection): ?>
+        <div class="mb-4 rounded-xl bg-blue-50 border border-blue-200 p-4 text-blue-700">
+        <p class="text-sm mb-2">
+            OTP has been sent to
+            <?php echo htmlspecialchars($pendingReset['email'] ?? $_POST['email'] ?? ''); ?>.
+            Please check your inbox (and spam folder).
+        </p>
 
-      <?php if (!$otpVerified): ?>
-        <label class="block text-sm font-semibold mb-2">OTP Code</label>
+        <?php if ($otpMessage): ?>
+            <p class="text-sm font-semibold text-blue-800">
+                <?php echo htmlspecialchars($otpMessage); ?>
+            </p>
+        <?php endif; ?>
+        </div>
+
+        <label class="block text-sm font-semibold mb-2">Enter OTP</label>
         <input type="text" name="otp_code" value="<?php echo htmlspecialchars($_POST['otp_code'] ?? ''); ?>" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-400" required>
         <div class="flex gap-2 mt-4">
             <button class="flex-1 bg-green-500 text-white py-2 rounded-lg hover:bg-green-600" type="submit" name="otp_action" value="verify">
@@ -242,10 +239,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </button>
         </div>
         
-      <?php endif; ?>
     <?php endif; ?>
 
-    <?php if ($otpVerified): ?>
+    <?php if ($showCompleteSection): ?>
       <div class="mb-4 rounded-xl bg-emerald-50 border border-emerald-200 p-4 text-emerald-700">
         <p class="text-sm font-semibold">OTP verified. Enter your new password below.</p>
       </div>

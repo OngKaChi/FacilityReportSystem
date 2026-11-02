@@ -606,29 +606,6 @@ function closeReportDetailsModal() {
   }, 200);
 }
 
-// Chatbot functionality
-function filterReportTable() {
-  const query = document.getElementById('reportSearch').value.toLowerCase();
-  const status = document.getElementById('filterStatus').value;
-  const start = document.getElementById('filterDateStart').value;
-  const end = document.getElementById('filterDateEnd').value;
-  const rows = document.querySelectorAll('.report-row');
-  
-  rows.forEach(row => {
-    const rowDesc = row.getAttribute('data-description');
-    const rowStatus = row.getAttribute('data-status');
-    const rowDate = row.getAttribute('data-date');
-    
-    let matchesSearch = rowDesc.includes(query);
-    let matchesStatus = status === "" || rowStatus === status;
-    let matchesDate = true;
-    if (start && rowDate < start) matchesDate = false;
-    if (end && rowDate > end) matchesDate = false;
-    
-    row.style.display = (matchesSearch && matchesStatus && matchesDate) ? "" : "none";
-  });
-}
-
 // This array holds the chat history in the exact structural layout Gemini expects
 let chatHistory = [];
 
@@ -668,12 +645,33 @@ function appendMessage(text, role) {
   chatMessages.scrollTop = chatMessages.scrollHeight;
 }
 
+function appendReportDraftAction(draft) {
+  const actionWrapper = document.createElement('div');
+  actionWrapper.className = 'report-draft-action mb-4 flex flex-col items-start';
+
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.className = 'rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-blue-700';
+  button.textContent = 'Fill report form with these details';
+  button.addEventListener('click', () => {
+    window.populateReportDraft(draft);
+    closeChatbotModal();
+    setTimeout(openReportModal, 220);
+  });
+
+  actionWrapper.appendChild(button);
+  chatMessages.appendChild(actionWrapper);
+  chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
 let chatRequestInProgress = false;
 
 async function sendMessage() {
   const text = chatInput.value.trim();
   if (!text || chatRequestInProgress) return;
   chatRequestInProgress = true;
+
+  chatMessages.querySelectorAll('.report-draft-action').forEach((action) => action.remove());
 
   // 1. Display user message in the modal
   appendMessage(text, 'user');
@@ -705,10 +703,8 @@ async function sendMessage() {
     });
 
     if (data.draft && typeof data.draft === 'object' && typeof window.populateReportDraft === 'function') {
-      window.populateReportDraft(data.draft);
-      appendMessage("I've added the details I could identify to the report form. Please review the fields, choose a photo, and complete anything missing.", 'model');
-      closeChatbotModal();
-      setTimeout(openReportModal, 220);
+      appendMessage("I found details for a report draft. You can continue chatting or fill the report form with the details so far.", 'model');
+      appendReportDraftAction(data.draft);
     }
 
   } catch (error) {
@@ -722,58 +718,6 @@ async function sendMessage() {
 chatInput.addEventListener('keypress', (e) => { 
   if (e.key === 'Enter') sendMessage(); 
 });
-
-
-function showTypingIndicator() {
-  const messagesDiv = document.getElementById('chatMessages');
-  const typingDiv = document.createElement('div');
-  typingDiv.id = 'typingIndicator';
-  typingDiv.className = 'mb-4';
-  typingDiv.innerHTML = `
-    <div class="bg-gray-200 dark:bg-slate-700 rounded-lg p-3 max-w-xs">
-      <div class="flex items-center">
-        <div class="flex space-x-1">
-          <div class="w-2 h-2 bg-gray-500 rounded-full animate-bounce"></div>
-          <div class="w-2 h-2 bg-gray-500 rounded-full animate-bounce" style="animation-delay: 0.1s"></div>
-          <div class="w-2 h-2 bg-gray-500 rounded-full animate-bounce" style="animation-delay: 0.2s"></div>
-        </div>
-        <span class="ml-2 text-sm text-gray-600">AI is typing...</span>
-      </div>
-    </div>
-  `;
-  messagesDiv.appendChild(typingDiv);
-  messagesDiv.scrollTop = messagesDiv.scrollHeight;
-}
-
-function hideTypingIndicator() {
-  const typingDiv = document.getElementById('typingIndicator');
-  if (typingDiv) {
-    typingDiv.remove();
-  }
-}
-
-function addMessage(text, sender) {
-  const messagesDiv = document.getElementById('chatMessages');
-  const messageDiv = document.createElement('div');
-  messageDiv.className = 'mb-4';
-
-  if (sender === 'user') {
-    messageDiv.innerHTML = `
-      <div class="bg-blue-600 text-white rounded-lg p-3 ml-auto max-w-full sm:max-w-xs">
-        <p class="text-sm">${text}</p>
-      </div>
-    `;
-  } else {
-    messageDiv.innerHTML = `
-      <div class="bg-gray-200 dark:bg-slate-700 rounded-lg p-3 max-w-full sm:max-w-xs">
-        <div class="text-sm text-gray-800 dark:text-gray-200">${text}</div>
-      </div>
-    `;
-  }
-
-  messagesDiv.appendChild(messageDiv);
-  messagesDiv.scrollTop = messagesDiv.scrollHeight;
-}
 
 // Handle asynchronous report form submission
 document.addEventListener('DOMContentLoaded', function() {

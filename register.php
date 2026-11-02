@@ -6,24 +6,22 @@ $success = false;
 $otpSent = false;
 $otpVerified = false;
 $otpMessage = '';
-$otpStep = '';
 $pendingRegister = $_SESSION['pending_register'] ?? null;
 
-function add_step_error(&$errors, $step, $message) {
+function add_step_error(&$errors, $message) {
     $errors[] = $message;
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (isset($_POST['otp_action']) && $_POST['otp_action'] === 'send') {
-        $otpStep = 'send';
         $email = trim($_POST['email'] ?? '');
 
         if ($email === '') {
-            add_step_error($errors, 'Step 1', 'Please enter your email address before requesting an OTP.');
+            add_step_error($errors, 'Please enter your email address before requesting an OTP.');
         } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            add_step_error($errors, 'Step 1', 'Please enter a valid email address.');
+            add_step_error($errors, 'Please enter a valid email address.');
         } elseif (strpos($email, '@student.newinti.edu.my') === false && strpos($email, '@newinti.edu.my') === false) {
-            add_step_error($errors, 'Step 1', 'Registration is restricted to student and lecturer emails only.');
+            add_step_error($errors, 'Registration is restricted to student and lecturer emails only.');
         }
 
         if (empty($errors)) {
@@ -33,7 +31,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt->store_result();
 
             if ($stmt->num_rows > 0) {
-                add_step_error($errors, 'Step 1', 'An account with that email already exists.');
+                add_step_error($errors, 'An account with that email already exists.');
             }
             $stmt->close();
         }
@@ -56,11 +54,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     if (isset($_POST['otp_action']) && $_POST['otp_action'] === 'resend') {
-        $otpStep = 'resend';
         $pendingRegister = $_SESSION['pending_register'] ?? null;
 
         if (!$pendingRegister) {
-            add_step_error($errors, 'Step 2', 'No pending registration found. Please request an OTP first.');
+            add_step_error($errors, 'No pending registration found. Please request an OTP first.');
         } else {
             $otpCode = generate_otp_code();
             $expiresAt = time() + 600;
@@ -79,18 +76,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     if (isset($_POST['otp_action']) && $_POST['otp_action'] === 'verify') {
-        $otpStep = 'verify';
         $otpCode = trim($_POST['otp_code'] ?? '');
         $pendingRegister = $_SESSION['pending_register'] ?? null;
 
         if (!$pendingRegister) {
-            add_step_error($errors, 'Step 2', 'No pending registration found. Please request an OTP first.');
+            add_step_error($errors, 'No pending registration found. Please request an OTP first.');
         } elseif ($otpCode === '') {
-            add_step_error($errors, 'Step 3', 'Please enter the OTP code.');
+            add_step_error($errors, 'Please enter the OTP code.');
         } elseif ($otpCode !== $pendingRegister['otp_code']) {
-            add_step_error($errors, 'Step 3', 'Incorrect OTP code.');
+            add_step_error($errors, 'Incorrect OTP code.');
         } elseif (time() > $pendingRegister['otp_expires']) {
-            add_step_error($errors, 'Step 3', 'The OTP code has expired. Please request a new one.');
+            add_step_error($errors, 'The OTP code has expired. Please request a new one.');
         }
 
         if (empty($errors)) {
@@ -102,30 +98,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     if (isset($_POST['otp_action']) && $_POST['otp_action'] === 'complete') {
-        $otpStep = 'complete';
         $name = trim($_POST['name'] ?? '');
         $password = $_POST['password'] ?? '';
         $pendingRegister = $_SESSION['pending_register'] ?? null;
 
         if (!$pendingRegister || empty($pendingRegister['otp_verified'])) {
-            add_step_error($errors, 'Step 4', 'OTP verification is required before completing registration.');
+            add_step_error($errors, 'OTP verification is required before completing registration.');
         }
 
         if (empty($errors)) {
             if ($name === '' || $password === '') {
-                add_step_error($errors, 'Step 4', 'Please enter a name and password to complete registration.');
+                add_step_error($errors, 'Please enter a name and password to complete registration.');
             } 
             // Password Complexity Rules
             elseif (strlen($password) < 8 || strlen($password) > 20) {
-                add_step_error($errors, 'Step 4', 'Password must be between 8 and 20 characters long.');
+                add_step_error($errors, 'Password must be between 8 and 20 characters long.');
             } elseif (!preg_match('/[A-Z]/', $password)) {
-                add_step_error($errors, 'Step 4', 'Password must contain at least one uppercase letter.');
+                add_step_error($errors, 'Password must contain at least one uppercase letter. (A-Z)');
             } elseif (!preg_match('/[a-z]/', $password)) {
-                add_step_error($errors, 'Step 4', 'Password must contain at least one lowercase letter.');
+                add_step_error($errors, 'Password must contain at least one lowercase letter. (a-z)');
             } elseif (!preg_match('/[0-9]/', $password)) {
-                add_step_error($errors, 'Step 4', 'Password must contain at least one number.');
+                add_step_error($errors, 'Password must contain at least one number. (0-9)');
             } elseif (!preg_match('/[^A-Za-z0-9]/', $password)) {
-                add_step_error($errors, 'Step 4', 'Password must contain at least one special character.');
+                add_step_error($errors, 'Password must contain at least one special character. (!@#$%^&*)');
             }
         }
 
@@ -141,7 +136,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 unset($_SESSION['pending_register']);
                 $success = true;
             } else {
-                add_step_error($errors, 'Step 4', 'Unable to create account. Please try again.');
+                add_step_error($errors, 'Unable to create account. Please try again.');
                 $stmt->close();
             }
         }
@@ -224,6 +219,7 @@ $showCompleteSection = $otpVerified;
         >
 
     <?php if ($showRequestOtp): ?>
+              <p class="text-sm text-slate-500 mb-4">Enter your email and click "Send Verification Code" to receive the OTP code.</p>
         <button
             type="submit"
             name="otp_action"

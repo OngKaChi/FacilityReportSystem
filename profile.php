@@ -5,6 +5,7 @@ require_login();
 $user = current_user();
 $errors = [];
 $success = false;
+$successMessage = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Handle car plate actions
@@ -14,77 +15,47 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($plate !== '') {
                 add_user_car_plate($user['id'], $plate);
                 $success = true;
+                $successMessage = 'Car plate added successfully.';
             }
         } elseif ($_POST['plate_action'] === 'delete') {
             $plateId = (int)($_POST['plate_id'] ?? 0);
             delete_user_car_plate($user['id'], $plateId);
             $success = true;
+            $successMessage = 'Car plate deleted successfully.';
         }
-    }
 
-    $name = trim($_POST['name'] ?? '');
-    $email = trim($_POST['email'] ?? '');
-    $password = $_POST['password'] ?? '';
+    } elseif (($_POST['password_action'] ?? '') === 'change') {
+        $newPassword = $_POST['new_password'] ?? '';
 
-    // Handle profile picture upload
-    if (isset($_FILES['avatar']) && $_FILES['avatar']['error'] === UPLOAD_ERR_OK) {
-        $upload_dir = 'uploads/avatars/';
-        if (!is_dir($upload_dir)) {
-            mkdir($upload_dir, 0777, true);
+        if ($newPassword === '') {
+            $errors[] = 'Enter your new password.';
+        } elseif (strlen($newPassword) < 8 || strlen($newPassword) > 20) {
+            $errors[] = 'Password must be between 8 and 20 characters long.';
+        } elseif (!preg_match('/[A-Z]/', $newPassword)) {
+            $errors[] = 'Password must contain at least one uppercase letter.';
+        } elseif (!preg_match('/[a-z]/', $newPassword)) {
+            $errors[] = 'Password must contain at least one lowercase letter.';
+        } elseif (!preg_match('/[0-9]/', $newPassword)) {
+            $errors[] = 'Password must contain at least one number.';
+        } elseif (!preg_match('/[^A-Za-z0-9]/', $newPassword)) {
+            $errors[] = 'Password must contain at least one special character.';
         }
-        
-        $file_info = pathinfo($_FILES['avatar']['name']);
-        $extension = strtolower($file_info['extension']);
-        $allowed_extensions = ['jpg', 'jpeg', 'png', 'gif'];
 
-        if (in_array($extension, $allowed_extensions)) {
-            $new_filename = 'avatar_' . $user['id'] . '_' . time() . '.' . $extension;
-            $upload_path = $upload_dir . $new_filename;
-
-            if (move_uploaded_file($_FILES['avatar']['tmp_name'], $upload_path)) {
-                $stmt = $conn->prepare("UPDATE users SET avatar = ? WHERE id = ?");
-                $stmt->bind_param('si', $upload_path, $user['id']);
-                $stmt->execute();
-                $stmt->close();
+        if (empty($errors)) {
+            $passwordHash = password_hash($newPassword, PASSWORD_DEFAULT);
+            $stmt = $conn->prepare('UPDATE users SET password = ? WHERE id = ?');
+            if (!$stmt) {
+                throw new RuntimeException('Unable to prepare the password update.');
             }
-        }
-    }
-
-    if ($name === '' || $email === '') {
-        $errors[] = 'Name and email are required.';
-    } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-        $errors[] = 'Please use a valid email address.';
-    }
-
-    if (empty($errors)) {
-        $stmt = $conn->prepare("SELECT id FROM users WHERE email = ? AND id <> ?");
-        $stmt->bind_param('si', $email, $user['id']);
-        $stmt->execute();
-        $stmt->store_result();
-
-        if ($stmt->num_rows > 0) {
-            $errors[] = 'This email is already registered to another account.';
-        }
-        $stmt->close();
-    }
-
-    if (empty($errors)) {
-        if ($password !== '') {
-            $passwordHash = password_hash($password, PASSWORD_DEFAULT);
-            $stmt = $conn->prepare("UPDATE users SET name = ?, email = ?, password = ? WHERE id = ?");
-            $stmt->bind_param('sssi', $name, $email, $passwordHash, $user['id']);
-        } else {
-            $stmt = $conn->prepare("UPDATE users SET name = ?, email = ? WHERE id = ?");
-            $stmt->bind_param('ssi', $name, $email, $user['id']);
-        }
-        if ($stmt->execute()) {
-            refresh_current_user();
+            $stmt->bind_param('si', $passwordHash, $user['id']);
+            if (!$stmt->execute()) {
+                $stmt->close();
+                throw new RuntimeException('Unable to update your password.');
+            }
+            $stmt->close();
             $success = true;
-            $user = current_user();
-        } else {
-            $errors[] = 'Unable to update profile at this time.';
+            $successMessage = 'Password updated successfully.';
         }
-        $stmt->close();
     }
 }
 $carPlates = get_user_car_plates($user['id']);
@@ -111,14 +82,14 @@ if ($user['role'] === 'admin' || $user['role'] === 'helper') {
     <div class="flex items-center justify-between mb-8">
       <div>
         <h1 class="text-3xl font-semibold text-slate-900 dark:text-white">My Profile</h1>
-        <p class="text-gray-600 dark:text-gray-400 mt-2">Manage your account information and update your password.</p>
+        <p class="text-gray-600 dark:text-gray-400 mt-2">Update your password and manage your registered vehicle plates.</p>
       </div>
     </div>
 
     <!-- Notification Area -->
     <div id="notification-area" class="mb-6">
       <?php if ($success): ?>
-        <div class="rounded-2xl bg-green-50 border border-green-200 p-4 text-green-700">Profile updated successfully.</div>
+        <div class="rounded-2xl bg-green-50 border border-green-200 p-4 text-green-700"><?php echo htmlspecialchars($successMessage); ?></div>
       <?php elseif (!empty($errors)): ?>
       <div class="mb-6 rounded-2xl bg-red-50 border border-red-200 p-4 text-red-700">
         <ul class="list-disc pl-5">
@@ -143,16 +114,16 @@ if ($user['role'] === 'admin' || $user['role'] === 'helper') {
           <p class="mt-2 w-full rounded-2xl border dark:border-slate-200 dark:border-slate-600 px-4 py-3 bg-gray-50 dark:bg-slate-700/50 text-gray-700 dark:text-gray-300"><?php echo htmlspecialchars($user['email']); ?></p>
         </div>
 
-        <label class="block">
-          <span class="text-sm font-semibold text-slate-700 dark:text-gray-300">New Password</span>
-          <input type="password" name="password" placeholder="Leave blank to keep current password" class="mt-2 w-full rounded-2xl border dark:border-slate-600 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-400 dark:focus:ring-blue-500 dark:bg-slate-700 dark:text-white">
-        </label>
-
         <div class="rounded-2xl bg-slate-50 dark:bg-slate-700/50 p-4 text-sm text-slate-600 dark:text-slate-300">
           Role: <span class="font-semibold text-slate-900 dark:text-white"><?php echo htmlspecialchars(ucfirst($user['role'])); ?></span>
         </div>
 
-        <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-2xl py-3 text-sm font-semibold">Save Profile</button>
+        <label class="block">
+          <span class="text-sm font-semibold text-slate-700 dark:text-gray-300">New Password</span>
+          <input type="password" name="new_password" autocomplete="new-password" placeholder="8-20 characters with uppercase, lowercase, number, and symbol" class="mt-2 w-full rounded-2xl border dark:border-slate-600 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-400 dark:focus:ring-blue-500 dark:bg-slate-700 dark:text-white" required>
+        </label>
+
+        <button type="submit" name="password_action" value="change" class="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-2xl py-3 text-sm font-semibold">Update Password</button>
       </form>
 
       <!-- Right Column: Car Plates -->

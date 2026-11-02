@@ -41,23 +41,47 @@ try {
         exit;
     }
 
-    $duplicateSql = "SELECT id FROM reports WHERE LOWER(TRIM(floor)) = LOWER(TRIM(?)) AND LOWER(TRIM(category)) = LOWER(TRIM(?)) AND LOWER(TRIM(location)) = LOWER(TRIM(?)) AND LOWER(TRIM(description)) = LOWER(TRIM(?)) AND created_at >= DATE_SUB(NOW(), INTERVAL 1 DAY) LIMIT 1";
-    $duplicateStmt = $conn->prepare($duplicateSql);
-    if (!$duplicateStmt) {
-        throw new RuntimeException('Unable to check for duplicate reports.');
-    }
-    $duplicateStmt->bind_param('ssss', $floor, $category, $location, $description);
-    $duplicateStmt->execute();
-    $duplicateStmt->store_result();
-
-    if ($duplicateStmt->num_rows > 0) {
+    if (($_POST['confirm_possible_duplicate'] ?? '') !== '1') {
+        $duplicateSql = "SELECT id, category, floor, location, status, created_at
+                         FROM reports
+                         WHERE LOWER(TRIM(floor)) = LOWER(TRIM(?))
+                           AND LOWER(TRIM(category)) = LOWER(TRIM(?))
+                           AND LOWER(TRIM(location)) = LOWER(TRIM(?))
+                           AND status IN ('Pending', 'In Progress')
+                           AND created_at >= DATE_SUB(NOW(), INTERVAL 1 DAY)
+                         ORDER BY created_at DESC
+                         LIMIT 3";
+        $duplicateStmt = $conn->prepare($duplicateSql);
+        if (!$duplicateStmt) {
+            throw new RuntimeException('Unable to check for similar reports.');
+        }
+        $duplicateStmt->bind_param('sss', $floor, $category, $location);
+        if (!$duplicateStmt->execute()) {
+            throw new RuntimeException('Unable to check for similar reports.');
+        }
+        $duplicateResult = $duplicateStmt->get_result();
+        $possibleDuplicates = [];
+        while ($duplicate = $duplicateResult->fetch_assoc()) {
+            $possibleDuplicates[] = [
+                'category' => $duplicate['category'],
+                'floor' => $duplicate['floor'],
+                'location' => $duplicate['location'],
+                'status' => $duplicate['status'],
+                'created_at' => $duplicate['created_at'],
+            ];
+        }
         $duplicateStmt->close();
-        header('Content-Type: application/json');
-        http_response_code(409); // Conflict
-        echo json_encode(['success' => false, 'error' => 'duplicate']);
-        exit;
+
+        if ($possibleDuplicates) {
+            http_response_code(409);
+            echo json_encode([
+                'success' => false,
+                'error' => 'possible_duplicate',
+                'matches' => $possibleDuplicates,
+            ]);
+            exit;
+        }
     }
-    $duplicateStmt->close();
 
     // Never create a report with an empty photo path when the required upload fails.
     $photoFile = $_FILES['photo'] ?? null;

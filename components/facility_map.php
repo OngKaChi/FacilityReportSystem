@@ -735,6 +735,7 @@ $isUser = isset($_SESSION['user']['role']) && $_SESSION['user']['role'] === 'use
     const body = new URLSearchParams({
       floor: editingRoom.floor,
       room_id: editingRoom.id,
+      current_label: editingRoom.currentLabel,
       label: newLabel
     }).toString();
 
@@ -743,10 +744,16 @@ $isUser = isset($_SESSION['user']['role']) && $_SESSION['user']['role'] === 'use
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: body
     })
-    .then(r => r.json())
+    .then(async r => {
+      const data = await r.json();
+      if (!r.ok || !data.success) {
+        throw new Error(data.error || 'Unable to update the room label.');
+      }
+      return data;
+    })
     .then(data => {
       if (data.success) location.reload();
-    });
+    })
   };
   <?php endif; ?>
 

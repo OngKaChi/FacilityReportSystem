@@ -163,7 +163,7 @@ $resolvedToday = $resolvedTodayQuery && $resolvedTodayQuery->num_rows > 0 ? (int
       <form method="get" class="flex flex-wrap items-center gap-3">
         <input type="hidden" name="view" value="reports">
         <div class="inline-flex items-center gap-3 rounded-3xl bg-gray-50 dark:bg-slate-700/50 px-4 py-2 text-sm text-gray-600 dark:text-gray-300 border dark:border-slate-700 shadow-sm">
-          <input type="text" id="reportSearch" name="search" value="<?php echo htmlspecialchars($_GET['search'] ?? '', ENT_QUOTES); ?>" placeholder="Search description..." class="w-48 border-0 bg-transparent focus:outline-none dark:text-white" />
+          <input type="text" id="reportSearch" name="search" value="<?php echo htmlspecialchars($_GET['search'] ?? '', ENT_QUOTES); ?>" placeholder="Search description or room..." class="w-48 border-0 bg-transparent focus:outline-none dark:text-white" />
           </div>
           <select id="filterStatus" name="status" class="rounded-3xl bg-gray-50 dark:bg-slate-700/50 px-4 py-2 text-sm text-gray-600 dark:text-gray-300 border dark:border-slate-700 focus:ring-0 cursor-pointer shadow-sm">
             <option value="">All Status</option>
@@ -199,9 +199,6 @@ $resolvedToday = $resolvedTodayQuery && $resolvedTodayQuery->num_rows > 0 ? (int
     $types = $filterClause['types'];
 
     $where = $filterClause['where'];
-    $where = $where === '' ? ' WHERE r.user_id = ?' : $where . ' AND r.user_id = ?';
-    $params[] = $user['id'];
-    $types .= 'i';
 
     $bindParams = static function ($statement, $types, &$params): void {
       if ($types === '') {
@@ -268,7 +265,7 @@ $resolvedToday = $resolvedTodayQuery && $resolvedTodayQuery->num_rows > 0 ? (int
             }
             // Pass the entire row object as JSON to the showReportDetails function
             echo '<tr class="relative border-b border-gray-200 dark:border-slate-700 hover:bg-gray-50 dark:hover:bg-slate-700/30 transition-colors report-row" 
-                      data-description="' . strtolower(htmlspecialchars($row['description'], ENT_QUOTES)) . '" 
+                      data-description="' . strtolower(htmlspecialchars($row['description'], ENT_QUOTES) . ' ' . htmlspecialchars($row['location'], ENT_QUOTES)) . '" 
                       data-status="' . htmlspecialchars($row['status'], ENT_QUOTES) . '" 
                       data-date="' . date('Y-m-d', strtotime($row['created_at'])) . '"
                       onclick=\'showReportDetails(' . json_encode($row) . ')\'>';
@@ -537,49 +534,49 @@ function closeChatbotModal() {
 // Report Details Modal Functions (for viewing existing report)
 function showReportDetails(report) {
   markReportAsSeen(report.id);
-  document.getElementById('detailId').textContent = report.id;
-  document.getElementById('detailCategory').textContent = report.category;
-  document.getElementById('detailEmergencyTier').textContent = report.emergency_tier || 'Normal';
-  document.getElementById('detailReporter').textContent = report.reporter_name || 'Guest';
-  document.getElementById('detailFloor').textContent = report.floor;
-  document.getElementById('detailLocation').textContent = report.location;
-  document.getElementById('detailDescription').textContent = report.description;
-  document.getElementById('detailDate').textContent = new Date(report.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: 'numeric' });
+    document.getElementById('detailId').textContent = report.id;
+    document.getElementById('detailCategory').textContent = report.category;
+    document.getElementById('detailEmergencyTier').textContent = report.emergency_tier || 'Normal';
+    document.getElementById('detailReporter').textContent = report.reporter_name || 'Guest';
+    document.getElementById('detailFloor').textContent = report.floor;
+    document.getElementById('detailLocation').textContent = report.location;
+    document.getElementById('detailDescription').textContent = report.description;
+    document.getElementById('detailDate').textContent = new Date(report.created_at).toLocaleDateString('en-US', { 
+        month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: 'numeric' 
+    });
 
-  // Status styling
-  const statusSpan = document.getElementById('detailStatus');
-  statusSpan.textContent = report.status === 'Resolved' ? 'Completed' : report.status;
-  statusSpan.className = 'inline-flex px-3 py-1 text-xs font-bold rounded-full'; // Reset classes
-  let statusClass = '';
-  switch(report.status.toLowerCase()) {
-      case 'pending': statusClass = 'bg-yellow-100 text-yellow-800'; break;
-      case 'in progress': statusClass = 'bg-blue-100 text-blue-800'; break;
-      case 'resolved': statusClass = 'bg-green-100 text-green-800'; break;
-      default: statusClass = 'bg-gray-100 text-gray-800'; break;
-  }
-  statusSpan.classList.add(...statusClass.split(' '));
+    // Status styling
+    const statusSpan = document.getElementById('detailStatus');
+    statusSpan.textContent = report.status === 'Resolved' ? 'Completed' : report.status;
+    statusSpan.className = 'inline-flex px-3 py-1 text-xs font-bold rounded-full'; 
+    let statusClass = '';
+    switch(report.status.toLowerCase()) {
+        case 'pending': statusClass = 'bg-yellow-100 text-yellow-800'; break;
+        case 'in progress': statusClass = 'bg-blue-100 text-blue-800'; break;
+        case 'resolved': statusClass = 'bg-green-100 text-green-800'; break;
+        default: statusClass = 'bg-gray-100 text-gray-800'; break;
+    }
+    statusSpan.classList.add(...statusClass.split(' '));
 
-  // Photo display
-  const photoContainer = document.getElementById('detailPhotoContainer');
-  const photoImg = document.getElementById('detailPhoto');
-  if (report.photo && report.photo !== '') {
-    photoImg.src = report.photo;
-    photoContainer.classList.remove('hidden');
-  } else {
-    photoImg.src = '';
-    photoContainer.classList.add('hidden');
-  }
+    // Photo display
+    const photoContainer = document.getElementById('detailPhotoContainer');
+    const photoImg = document.getElementById('detailPhoto');
+    if (report.photo && report.photo !== '') {
+        photoImg.src = report.photo;
+        photoContainer.classList.remove('hidden');
+    } else {
+        photoImg.src = '';
+        photoContainer.classList.add('hidden');
+    }
 
-  const modal = document.getElementById("reportDetailsModal");
-  const box = document.getElementById("reportDetailsModalBox");
-
-  modal.classList.remove("hidden");
-  modal.classList.add("flex");
-
-  setTimeout(() => {
-    box.classList.remove("scale-95");
-    box.classList.add("scale-100");
-  }, 10);
+    const modal = document.getElementById("reportDetailsModal");
+    const box = document.getElementById("reportDetailsModalBox");
+    modal.classList.remove("hidden");
+    modal.classList.add("flex");
+    setTimeout(() => {
+        box.classList.remove("scale-95");
+        box.classList.add("scale-100");
+    }, 10);
 }
 
 function closeReportDetailsModal() {

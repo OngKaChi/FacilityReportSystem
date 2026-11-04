@@ -180,19 +180,18 @@ function send_otp_email($email, $code, $purpose = 'verification', $link = null) 
                ($link ? "Please complete your setup here: {$link}\n\n" : "") .
                "This code expires in 10 minutes. If you did not request this, please ignore this email.";
 
-    // Use PHPMailer if available (Highly Recommended)
+    // Use PHPMailer if available
     if (class_exists('PHPMailer\PHPMailer\PHPMailer')) {
         $mail = new \PHPMailer\PHPMailer\PHPMailer(true);
         try {
             $mail->isHTML(true);
             $mail->isSMTP();
-            // Set debug mode to 0 to disable technical output now that it works
             $mail->SMTPDebug = 0; 
             $mail->Host = $smtpHost;
             $mail->SMTPAuth = true;
             $mail->Username = $smtpUser; 
             $mail->Password = $smtpPass; 
-            $mail->SMTPSecure = $smtpSecure; // Usually 'tls' or 'ssl'
+            $mail->SMTPSecure = $smtpSecure; 
             $mail->Port = $smtpPort;
             
             // Bypass SSL certificate verification for xampp local host
@@ -204,7 +203,6 @@ function send_otp_email($email, $code, $purpose = 'verification', $link = null) 
                 )
             );
             
-            // Gmail often requires the 'From' address to match the authenticated Username
             $mail->setFrom($smtpUser, $smtpFromName);
             $mail->addReplyTo($smtpUser, $smtpFromName);
             
@@ -236,6 +234,8 @@ function send_notification_email($email, $reportId, $case, $purpose = 'notify', 
             $text = "Your Reported Case Has Been Resolved";
         } elseif ($purpose === 'In Progress') {
             $text = "Your Reported Case is Now In Progress";
+        } elseif ($purpose === 'Deleted') {
+            $text = "Your Reported Case Has Been Deleted";
         } else {
             $text = "Your Reported Case Has Been Updated";
         }
@@ -255,7 +255,7 @@ function send_notification_email($email, $reportId, $case, $purpose = 'notify', 
         $subject = "Notification: Your Reported Case Has Been " . ucfirst($purpose);
         $message = "$text:\n\n" . "You can safely ignore this email.";
     } else {
-        $text = "The Reported Case (ID: $case {$reportId}) Has Been Updated to '{$purpose}'";
+        $text = "The Reported Case (ID: $case {$reportId}) Has Been Updated to {$purpose}";
         // Create HTML version of the message for better alignment and UI
         $htmlMessage = "
         <div style='font-family: Arial, sans-serif; max-width: 500px; margin: 20px auto; padding: 30px; border: 1px solid #e5e7eb; border-radius: 16px; text-align: center; color: #374151;'>
@@ -273,19 +273,18 @@ function send_notification_email($email, $reportId, $case, $purpose = 'notify', 
         $message = "$text:\n\n" . "You can safely ignore this email.";
     }
 
-    // Use PHPMailer if available (Highly Recommended)
+    // Use PHPMailer if available 
     if (class_exists('PHPMailer\PHPMailer\PHPMailer')) {
         $mail = new \PHPMailer\PHPMailer\PHPMailer(true);
         try {
             $mail->isHTML(true);
             $mail->isSMTP();
-            // Set debug mode to 0 to disable technical output now that it works
             $mail->SMTPDebug = 0; 
             $mail->Host = $smtpHost;
             $mail->SMTPAuth = true;
             $mail->Username = $smtpUser; 
             $mail->Password = $smtpPass; 
-            $mail->SMTPSecure = $smtpSecure; // Usually 'tls' or 'ssl'
+            $mail->SMTPSecure = $smtpSecure; 
             $mail->Port = $smtpPort;
             
             // Bypass SSL certificate verification for xampp local host

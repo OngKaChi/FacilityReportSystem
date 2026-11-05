@@ -205,7 +205,8 @@ $showCompleteSection = $otpVerified;
   <?php if (!$success): ?>
   <form method="POST" action="forgot_password.php">
     <label class="block text-sm font-semibold mb-2">Email</label>
-    <input type="email" name="email" value="<?php echo htmlspecialchars($pendingReset['email'] ?? $_POST['email'] ?? $_GET['email'] ?? ''); ?>" class="w-full mb-3 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-400" required <?php echo ($otpSent && !$otpVerified) || $otpVerified ? 'readonly' : ''; ?>>
+    <input type="email" name="email" value="<?php echo htmlspecialchars($pendingReset['email'] ?? $_POST['email'] ?? $_GET['email'] ?? ''); ?>
+    " class="w-full mb-3 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-400" required <?php echo ($otpSent && !$otpVerified) || $otpVerified ? 'readonly' : ''; ?>>
 
     <?php if ($showRequestOtp): ?>
       <p class="text-sm text-slate-500 mb-4">Enter your email and click "Send Verification Code" to receive the OTP code.</p>

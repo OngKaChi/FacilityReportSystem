@@ -38,9 +38,11 @@ function buildReportFilterClause(array $filters): array
     }
 
     if ($filters['search'] !== '') {
-        $conditions[] = 'r.description LIKE ?';
-        $params[] = '%' . $filters['search'] . '%';
-        $types .= 's';
+        $conditions[] = '(r.description LIKE ? OR r.location LIKE ?)';
+        $searchTerm = '%' . $filters['search'] . '%';
+        $params[] = $searchTerm;
+        $params[] = $searchTerm;
+        $types .= 'ss';
     }
 
     if (in_array($filters['status'], ['Pending', 'In Progress', 'Resolved'], true)) {

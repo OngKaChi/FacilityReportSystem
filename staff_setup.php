@@ -7,101 +7,89 @@ $pendingSetup = $_SESSION['pending_staff_setup'] ?? null;
 $email = $pendingSetup['email'] ?? trim($_GET['email'] ?? $_POST['email'] ?? '');
 $otpVerified = !empty($pendingSetup['otp_verified']);
 
-if (empty($_SESSION['csrf_token'])) {
-    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
-}
-
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    if (!isset($_POST['csrf_token']) || !is_string($_POST['csrf_token'])
-        || !hash_equals($_SESSION['csrf_token'], $_POST['csrf_token'])) {
-        $errors[] = 'Your request could not be verified. Please reload the page and try again.';
+    $action = $_POST['action'] ?? '';
+    $email = trim($_POST['email'] ?? '');
+
+    if ($action === 'verify') {
+      $otpCode = trim($_POST['otp_code'] ?? '');
+      if (!filter_var($email, FILTER_VALIDATE_EMAIL) || $otpCode === '') {
+          $errors[] = 'Enter the email address from your staff invitation and the OTP code.';
+      } else {
+          $userStatement = $conn->prepare("SELECT id FROM users WHERE email = ? AND role = 'helper' LIMIT 1");
+          if (!$userStatement) {
+              throw new RuntimeException('Unable to prepare staff account verification.');
+          }
+          $userStatement->bind_param('s', $email);
+          if (!$userStatement->execute()) {
+              throw new RuntimeException('Unable to verify the staff account.');
+          }
+          $staff = $userStatement->get_result()->fetch_assoc();
+          $userStatement->close();  
+          if (!$staff || !verify_user_otp((int)$staff['id'], $otpCode)) {
+              $errors[] = 'The OTP is incorrect or expired. Please contact the administrator for a new invitation.';
+          } else {
+              $_SESSION['pending_staff_setup'] = [
+                  'user_id' => (int)$staff['id'],
+                  'email' => $email,
+                  'otp_verified' => true,
+                  'verified_at' => time(),
+              ];
+              $pendingSetup = $_SESSION['pending_staff_setup'];
+              $otpVerified = true;
+          }
+      }
+    } elseif ($action === 'complete') {
+      $pendingSetup = $_SESSION['pending_staff_setup'] ?? null;
+      $password = $_POST['password'] ?? '';
+      $confirmPassword = $_POST['confirm_password'] ?? '';  
+      if (!$pendingSetup || empty($pendingSetup['otp_verified'])
+          || time() > ($pendingSetup['verified_at'] ?? 0) + 600) {
+          unset($_SESSION['pending_staff_setup']);
+          $pendingSetup = null;
+          $otpVerified = false;
+          $errors[] = 'Your verification has expired. Please open a current staff invitation and verify the OTP again.';
+      } elseif ($password === '' || $confirmPassword === '') {
+          $errors[] = 'Enter and confirm your password.';
+      } elseif ($password !== $confirmPassword) {
+          $errors[] = 'Passwords do not match.';
+      } elseif (strlen($password) < 8 || strlen($password) > 20) {
+          $errors[] = 'Password must be between 8 and 20 characters long.';
+      } elseif (!preg_match('/[A-Z]/', $password)) {
+          $errors[] = 'Password must contain at least one uppercase letter.';
+      } elseif (!preg_match('/[a-z]/', $password)) {
+          $errors[] = 'Password must contain at least one lowercase letter.';
+      } elseif (!preg_match('/[0-9]/', $password)) {
+          $errors[] = 'Password must contain at least one number.';
+      } elseif (!preg_match('/[^A-Za-z0-9]/', $password)) {
+          $errors[] = 'Password must contain at least one special character.';
+      } else {
+          $passwordHash = password_hash($password, PASSWORD_DEFAULT);
+          $updateStatement = $conn->prepare(
+              "UPDATE users SET password = ?, otp_code = NULL, otp_expires = NULL
+               WHERE id = ? AND role = 'helper'"
+          );
+          if (!$updateStatement) {
+              throw new RuntimeException('Unable to prepare the staff account update.');
+          }
+          $updateStatement->bind_param('si', $passwordHash, $pendingSetup['user_id']);
+          if (!$updateStatement->execute()) {
+              throw new RuntimeException('Unable to save the staff account password.');
+          }
+          if ($updateStatement->affected_rows !== 1) {
+              $errors[] = 'The staff account could not be updated. Please contact the administrator.';
+          } else {
+              unset($_SESSION['pending_staff_setup']);
+              $success = true;
+          }
+          $updateStatement->close();
+      }   
+      if (!$success && $pendingSetup) {
+          $email = $pendingSetup['email'];
+          $otpVerified = !empty($pendingSetup['otp_verified']);
+      }
     } else {
-        $action = $_POST['action'] ?? '';
-        $email = trim($_POST['email'] ?? '');
-
-        if ($action === 'verify') {
-            $otpCode = trim($_POST['otp_code'] ?? '');
-            if (!filter_var($email, FILTER_VALIDATE_EMAIL) || $otpCode === '') {
-                $errors[] = 'Enter the email address from your staff invitation and the OTP code.';
-            } else {
-                $userStatement = $conn->prepare("SELECT id FROM users WHERE email = ? AND role = 'helper' LIMIT 1");
-                if (!$userStatement) {
-                    throw new RuntimeException('Unable to prepare staff account verification.');
-                }
-                $userStatement->bind_param('s', $email);
-                if (!$userStatement->execute()) {
-                    throw new RuntimeException('Unable to verify the staff account.');
-                }
-                $staff = $userStatement->get_result()->fetch_assoc();
-                $userStatement->close();
-
-                if (!$staff || !verify_user_otp((int)$staff['id'], $otpCode)) {
-                    $errors[] = 'The OTP is incorrect or expired. Please contact the administrator for a new invitation.';
-                } else {
-                    $_SESSION['pending_staff_setup'] = [
-                        'user_id' => (int)$staff['id'],
-                        'email' => $email,
-                        'otp_verified' => true,
-                        'verified_at' => time(),
-                    ];
-                    $pendingSetup = $_SESSION['pending_staff_setup'];
-                    $otpVerified = true;
-                }
-            }
-        } elseif ($action === 'complete') {
-            $pendingSetup = $_SESSION['pending_staff_setup'] ?? null;
-            $password = $_POST['password'] ?? '';
-            $confirmPassword = $_POST['confirm_password'] ?? '';
-
-            if (!$pendingSetup || empty($pendingSetup['otp_verified'])
-                || time() > ($pendingSetup['verified_at'] ?? 0) + 600) {
-                unset($_SESSION['pending_staff_setup']);
-                $pendingSetup = null;
-                $otpVerified = false;
-                $errors[] = 'Your verification has expired. Please open a current staff invitation and verify the OTP again.';
-            } elseif ($password === '' || $confirmPassword === '') {
-                $errors[] = 'Enter and confirm your password.';
-            } elseif ($password !== $confirmPassword) {
-                $errors[] = 'Passwords do not match.';
-            } elseif (strlen($password) < 8 || strlen($password) > 20) {
-                $errors[] = 'Password must be between 8 and 20 characters long.';
-            } elseif (!preg_match('/[A-Z]/', $password)) {
-                $errors[] = 'Password must contain at least one uppercase letter.';
-            } elseif (!preg_match('/[a-z]/', $password)) {
-                $errors[] = 'Password must contain at least one lowercase letter.';
-            } elseif (!preg_match('/[0-9]/', $password)) {
-                $errors[] = 'Password must contain at least one number.';
-            } elseif (!preg_match('/[^A-Za-z0-9]/', $password)) {
-                $errors[] = 'Password must contain at least one special character.';
-            } else {
-                $passwordHash = password_hash($password, PASSWORD_DEFAULT);
-                $updateStatement = $conn->prepare(
-                    "UPDATE users SET password = ?, otp_code = NULL, otp_expires = NULL
-                     WHERE id = ? AND role = 'helper'"
-                );
-                if (!$updateStatement) {
-                    throw new RuntimeException('Unable to prepare the staff account update.');
-                }
-                $updateStatement->bind_param('si', $passwordHash, $pendingSetup['user_id']);
-                if (!$updateStatement->execute()) {
-                    throw new RuntimeException('Unable to save the staff account password.');
-                }
-                if ($updateStatement->affected_rows !== 1) {
-                    $errors[] = 'The staff account could not be updated. Please contact the administrator.';
-                } else {
-                    unset($_SESSION['pending_staff_setup']);
-                    $success = true;
-                }
-                $updateStatement->close();
-            }
-
-            if (!$success && $pendingSetup) {
-                $email = $pendingSetup['email'];
-                $otpVerified = !empty($pendingSetup['otp_verified']);
-            }
-        } else {
-            $errors[] = 'Invalid request. Please use the link from your staff invitation.';
-        }
+        $errors[] = 'Invalid request. Please use the link from your staff invitation.';
     }
 }
 
@@ -155,7 +143,6 @@ $email = $pendingSetup['email'] ?? $email;
 
     <?php if (!$success): ?>
       <form method="POST" action="staff_setup.php<?php echo $email !== '' ? '?email=' . rawurlencode($email) : ''; ?>" class="space-y-4">
-        <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['csrf_token'], ENT_QUOTES); ?>">
         <div>
           <label for="email" class="block text-sm font-semibold mb-2">Email</label>
           <input id="email" type="email" name="email" value="<?php echo htmlspecialchars($email, ENT_QUOTES); ?>"

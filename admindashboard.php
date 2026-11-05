@@ -1359,8 +1359,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     renderUpdates();
 });
-</script>
-<script>
+
     // Handle real-time form submission for editing issues
     document.addEventListener('DOMContentLoaded', function() {
         const editForm = document.getElementById('editForm');

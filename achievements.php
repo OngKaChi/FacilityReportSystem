@@ -45,7 +45,7 @@ $result = $conn->query($sql);
       <span class="text-2xl font-bold text-blue-600"><?php echo $reportCompletedCount; ?> Reports</span>
     </div>
     <div class="w-full bg-gray-200 dark:bg-slate-700 rounded-full h-4">
-      <div class="bg-blue-600 h-4 rounded-full transition-all duration-1000" style="width: <?php echo min(($reportCompletedCount / 25) * 100, 100); ?>%"></div>
+      <div class="bg-blue-600 h-4 rounded-full transition-all duration-1000" style="width: <?php echo min($reportCompletedCount, 100); ?>%"></div>
     </div>
   </div>
 

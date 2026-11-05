@@ -56,14 +56,12 @@ if (empty($history)) {
     exit;
 }
 
-// 1. Enter your exact key securely here (Make sure there are no spaces!)
 $model = 'gemini-2.5-flash';
 $apiKey = GEMINI_API_KEY; 
 
-// 2. Clean endpoint URL string without append concatenations
 $url = "https://generativelanguage.googleapis.com/v1beta/models/" . $model . ":generateContent";
 
-// 3. System context schema layout (tuned configuration settings)
+// Tuned configure setting
 $data = [
     "contents" => $history, 
     "system_instruction" => [
@@ -104,9 +102,13 @@ $data = [
             Operational Rules:
             - If the user's issue does not fit one of these three types, politely inform them that you can only help with Broken Equipment, Maintenance, Double Parking or Emergency Tiers.
             - Always prioritize user safety. Never suggest an unsafe DIY fix.
+            - Double Parking issue must always be classified as Emergency Tier and only happens in the Basement, Floor 1 and Floor 2.
+            - Always ask for the specific location (floor and room/area) of the issue.
             - Keep responses highly focused, punchy, and professional. Use Markdown bold text for key details.
-            - Return a report draft when the user has described a reportable issue that requires staff attention. Leave unknown report fields null; do not invent details. Do not return a draft for general questions or issues that can safely be resolved by the user.
-            - The draft floor must be one of: Rooftop, Level 6, Level 5, Level 4, Level 3, Level 2, Level 1, Basement. The location should be the specific room or area the user gave. Use only these categories: Broken Equipment, Maintenance, Double Parking. For Maintenance, use one of: Air conditioning, Electrical, General work order, Plumbing, Repairing.
+            - Return a report draft when the user has described a reportable issue that requires staff attention. 
+            - Leave unknown report fields null; do not invent details. Do not return a draft for general questions or issues that can safely be resolved by the user.
+            - The draft floor must be one of: Rooftop, Level 6, Level 5, Level 4, Level 3, Level 2, Level 1, Basement. 
+            - The location should be the specific room or area the user gave. Use only these categories: Broken Equipment, Maintenance, Double Parking. For Maintenance, use one of: Air conditioning, Electrical, General work order, Plumbing, Repairing.
             - Classify emergency_tier as Normal, Urgent, or Emergency based on the described risk. Include the user's issue details in description. Use null when the user has not provided enough information for a field.
             "]
         ]
@@ -216,7 +218,7 @@ if (
     !is_array($assistantData)
     || !isset($assistantData['reply'])
     || !is_string($assistantData['reply'])
-    || (isset($assistantData['draft']) && $assistantData['draft'] !== null && !is_array($assistantData['draft']))
+    || (isset($assistantData['draft']) && !is_array($assistantData['draft']))
 ) {
     http_response_code(502);
     echo json_encode(['reply' => 'System Error: The assistant returned an invalid response.']);

@@ -207,90 +207,92 @@ $showCompleteSection = $otpVerified;
     </div>
   <?php endif; ?>
 
-  <form method="POST" action="register.php">
-    <label class="block text-sm font-semibold mb-2">Email</label>
-        <input id="emailInput"
-            type="email"
-            name="email"
-            value="<?php echo htmlspecialchars($pendingRegister['email'] ?? $_POST['email'] ?? ''); ?>"
-            class="w-full mb-3 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-400"
-            required
-            <?php echo ($otpSent || $otpVerified) ? 'readonly' : ''; ?>
-        >
+    <?php if (!$success): ?>
+    <form method="POST" action="register.php">
+        <label class="block text-sm font-semibold mb-2">Email</label>
+            <input id="emailInput"
+                type="email"
+                name="email"
+                value="<?php echo htmlspecialchars($pendingRegister['email'] ?? $_POST['email'] ?? ''); ?>"
+                class="w-full mb-3 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-400"
+                required
+                <?php echo ($otpSent || $otpVerified) ? 'readonly' : ''; ?>
+            >
 
-    <?php if ($showRequestOtp): ?>
-              <p class="text-sm text-slate-500 mb-4">Enter your email and click "Send Verification Code" to receive the OTP code.</p>
-        <button
-            type="submit"
-            name="otp_action"
-            value="send"
-            class="w-full bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 mb-4"
-        >
-            Send Verification Code
-        </button>
-    <?php endif; ?>
-
-    <?php if ($showOtpSection): ?>
-        <div class="mb-4 rounded-xl bg-blue-50 border border-blue-200 p-4 text-blue-700">
-        <p class="text-sm mb-2">
-            OTP has been sent to
-            <?php echo htmlspecialchars($pendingRegister['email'] ?? $_POST['email'] ?? ''); ?>.
-            Please check your inbox (and spam folder).
-        </p>
-
-        <?php if ($otpMessage): ?>
-            <p class="text-sm font-semibold text-blue-800">
-                <?php echo htmlspecialchars($otpMessage); ?>
-            </p>
+        <?php if ($showRequestOtp): ?>
+                <p class="text-sm text-slate-500 mb-4">Enter your email and click "Send Verification Code" to receive the OTP code.</p>
+            <button
+                type="submit"
+                name="otp_action"
+                value="send"
+                class="w-full bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 mb-4"
+            >
+                Send Verification Code
+            </button>
         <?php endif; ?>
+
+        <?php if ($showOtpSection): ?>
+            <div class="mb-4 rounded-xl bg-blue-50 border border-blue-200 p-4 text-blue-700">
+            <p class="text-sm mb-2">
+                OTP has been sent to
+                <?php echo htmlspecialchars($pendingRegister['email'] ?? $_POST['email'] ?? ''); ?>.
+                Please check your inbox (and spam folder).
+            </p>
+
+            <?php if ($otpMessage): ?>
+                <p class="text-sm font-semibold text-blue-800">
+                    <?php echo htmlspecialchars($otpMessage); ?>
+                </p>
+            <?php endif; ?>
+            </div>
+
+            <label class="block text-sm font-semibold mb-2">Enter OTP</label>
+
+            <input
+            type="text"
+            name="otp_code"
+            value="<?php echo htmlspecialchars($_POST['otp_code'] ?? ''); ?>"
+            class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-400"
+            required
+            >
+
+            <div class="flex gap-2 mt-4">
+                <button
+                    class="flex-1 bg-green-500 text-white py-2 rounded-lg hover:bg-green-600"
+                    type="submit"
+                    name="otp_action"
+                    value="verify"
+                >
+                    Verify Code
+                </button>
+                <button
+                    type="submit"
+                    name="otp_action"
+                    value="resend"
+                    formnovalidate
+                    class="flex-1 bg-gray-200 text-gray-700 py-2 rounded-lg hover:bg-gray-300"
+                >
+                    Resend Code
+                </button>
+            </div>
+        <?php endif; ?>
+
+        <?php if ($showCompleteSection): ?>
+        <div class="mb-4 rounded-xl bg-emerald-50 border border-emerald-200 p-4 text-emerald-700">
+            <p class="text-sm font-semibold">OTP verified. Enter your name and password to complete registration.</p>
         </div>
 
-        <label class="block text-sm font-semibold mb-2">Enter OTP</label>
+        <label class="block text-sm font-semibold mb-2">Name</label>
+        <input name="name" value="<?php echo htmlspecialchars($_POST['name'] ?? ''); ?>" class="w-full mb-3 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-400" required>
 
-        <input
-        type="text"
-        name="otp_code"
-        value="<?php echo htmlspecialchars($_POST['otp_code'] ?? ''); ?>"
-        class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-400"
-        required
-        >
+        <label class="block text-sm font-semibold mb-2">Password</label>
+        <input type="password" name="password" class="w-full mb-4 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-400" required>
 
-        <div class="flex gap-2 mt-4">
-            <button
-                class="flex-1 bg-green-500 text-white py-2 rounded-lg hover:bg-green-600"
-                type="submit"
-                name="otp_action"
-                value="verify"
-            >
-                Verify Code
-            </button>
-            <button
-                type="submit"
-                name="otp_action"
-                value="resend"
-                formnovalidate
-                class="flex-1 bg-gray-200 text-gray-700 py-2 rounded-lg hover:bg-gray-300"
-            >
-                Resend Code
-            </button>
-        </div>
+        <button class="w-full bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600" type="submit" name="otp_action" value="complete">Complete Registration</button>
+        <?php endif; ?>
+
+    </form>
     <?php endif; ?>
-
-    <?php if ($showCompleteSection): ?>
-      <div class="mb-4 rounded-xl bg-emerald-50 border border-emerald-200 p-4 text-emerald-700">
-        <p class="text-sm font-semibold">OTP verified. Enter your name and password to complete registration.</p>
-      </div>
-
-      <label class="block text-sm font-semibold mb-2">Name</label>
-      <input name="name" value="<?php echo htmlspecialchars($_POST['name'] ?? ''); ?>" class="w-full mb-3 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-400" required>
-
-      <label class="block text-sm font-semibold mb-2">Password</label>
-      <input type="password" name="password" class="w-full mb-4 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-400" required>
-
-      <button class="w-full bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600" type="submit" name="otp_action" value="complete">Complete Registration</button>
-    <?php endif; ?>
-
-  </form>
 
   <p class="text-center text-sm mt-4 text-slate-600">
     Already have an account? <a href="Login.php" class="text-blue-500 hover:underline">Login</a>

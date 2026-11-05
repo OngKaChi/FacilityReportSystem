@@ -30,8 +30,6 @@ if (!$latestReportResult) {
 }
 $latestReportId = (int)$latestReportResult->fetch_assoc()['latest_id'];
 $view = $_GET['view'] ?? 'dashboard';
-$reportsPerPage = 10;
-$currentPage = max(1, (int)($_GET['page'] ?? 1));
 
 $filters = getReportFilters($_GET);
 $selectedMonth = $filters['selectedMonth'];
@@ -75,8 +73,7 @@ $barData = [];
 $statusCounts = [
     'pending' => 0,
     'in progress' => 0,
-    'resolved' => 0,
-    'other' => 0
+    'resolved' => 0
 ];
 
 $todayResult = $conn->query("SELECT COUNT(*) AS count FROM reports WHERE DATE(created_at) = CURDATE()");
@@ -92,27 +89,28 @@ if ($monthResult) {
     $monthCount = $monthResult->fetch_assoc()['count'];
 }
 
-$where = $conditions;
+$recentReports = null;
+if ($view === 'reports') {
+    $reportsPerPage = 10;
+    $currentPage = max(1, (int)($_GET['page'] ?? 1));
+    $where = $conditions;
 
-$totalReports = 0;
-$countStatement = $conn->prepare("SELECT COUNT(*) AS total FROM reports r$where");
-if ($types !== '') {
-    $bindValues = [$types];
-    foreach ($params as &$param) {
-        $bindValues[] = &$param;
+    $countStatement = $conn->prepare("SELECT COUNT(*) AS total FROM reports r$where");
+    if ($types !== '') {
+        $bindValues = [$types];
+        foreach ($params as &$param) {
+            $bindValues[] = &$param;
+        }
+        call_user_func_array([$countStatement, 'bind_param'], $bindValues);
     }
-    call_user_func_array([$countStatement, 'bind_param'], $bindValues);
-}
-$countStatement->execute();
-if ($countStatement) {
+    $countStatement->execute();
     $totalReports = (int)$countStatement->get_result()->fetch_assoc()['total'];
     $countStatement->close();
-}
-$totalPages = max(1, (int)ceil($totalReports / $reportsPerPage));
-$currentPage = min($currentPage, $totalPages);
-$offset = ($currentPage - 1) * $reportsPerPage;
 
-if ($view === 'reports') {
+    $totalPages = max(1, (int)ceil($totalReports / $reportsPerPage));
+    $currentPage = min($currentPage, $totalPages);
+    $offset = ($currentPage - 1) * $reportsPerPage;
+
     $reportsSql = "SELECT r.*, u_assigned.name as assigned_name, u_reporter.name as reporter_name 
                    FROM reports r 
                    LEFT JOIN users u_assigned ON r.assigned_to = u_assigned.id 
@@ -133,15 +131,6 @@ if ($view === 'reports') {
     call_user_func_array([$reportsStatement, 'bind_param'], $bindValues);
     $reportsStatement->execute();
     $reportsResult = $reportsStatement->get_result();
-} else {
-    $reportsResult = $conn->query("SELECT r.*, u_assigned.name as assigned_name, u_reporter.name as reporter_name 
-                                   FROM reports r 
-                                   LEFT JOIN users u_assigned ON r.assigned_to = u_assigned.id 
-                                   LEFT JOIN users u_reporter ON r.user_id = u_reporter.id 
-                                   ORDER BY r.created_at DESC LIMIT 10");
-}
-
-if ($reportsResult) {
     $recentReports = $reportsResult;
 }
 
@@ -181,8 +170,6 @@ while ($row = $statusResult->fetch_assoc()) {
     $key = trim($row['status']);
     if (isset($statusCounts[$key])) {
         $statusCounts[$key] = $row['count'];
-    } else {
-        $statusCounts['other'] += $row['count'];
     }
 }
 
@@ -243,6 +230,14 @@ while ($row = $issueDateResult->fetch_assoc()) {
     .card--compact { padding:0.75rem; border-radius:0.75rem; }
     .chart-wrap { padding:1rem; background:transparent; border-radius:0.75rem; }
     .dashboard-hero { background: linear-gradient(135deg, #0f172a 0%, #1d4ed8 42%, #0ea5e9 100%); }
+    .report-description {
+      display: -webkit-box;
+      max-width: 20rem;
+      overflow: hidden;
+      overflow-wrap: anywhere;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 2;
+    }
     @media (max-width: 639px) {
       .card--stat { gap:0.25rem; padding:0.75rem; min-width:0; }
       .card--stat p.title { font-size:0.58rem; letter-spacing:0.04em; line-height:1.25; }
@@ -645,7 +640,10 @@ while ($row = $issueDateResult->fetch_assoc()) {
                 if ($dateStart !== '') $pdfQuery['date_start'] = $dateStart;
                 if ($dateEnd !== '') $pdfQuery['date_end'] = $dateEnd;
               ?>
-              <a href="generate_report_pdf.php?<?php echo htmlspecialchars(http_build_query($pdfQuery), ENT_QUOTES); ?>" target="_blank" class="w-full rounded-3xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-emerald-700 text-center">Generate PDF</a>
+              <a href="generate_report_pdf.php?<?php echo htmlspecialchars(http_build_query($pdfQuery), ENT_QUOTES); ?>
+                " target="_blank" class="w-full rounded-3xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-emerald-700 flex items-center justify-center gap-2">
+                Generate PDF
+              </a>
             </div>
           </form>
         </div>
@@ -695,7 +693,7 @@ while ($row = $issueDateResult->fetch_assoc()) {
                       <td class="py-4 px-3 text-xs font-bold text-slate-900 dark:text-white" data-label="Urgency"><?php echo htmlspecialchars($row['emergency_tier']); ?></td>
                       <td class="py-4 px-3 dark:text-slate-300" data-label="Reported By"><?php echo htmlspecialchars($row['reporter_name'] ?? 'Guest'); ?></td>
                       <td class="py-4 px-3 dark:text-slate-300" data-label="Reported Time"><?php echo date('M j, Y H:i', strtotime($row['created_at'])); ?></td>
-                      <td class="py-4 px-3 font-semibold text-slate-900 dark:text-white" data-label="Description"><?php echo htmlspecialchars($row['description']); ?></td>
+                      <td class="py-4 px-3 font-semibold text-slate-900 dark:text-white" data-label="Description"><div class="report-description" title="<?php echo htmlspecialchars($row['description'], ENT_QUOTES); ?>"><?php echo htmlspecialchars($row['description']); ?></div></td>
                       <td class="py-4 px-3 text-xs font-medium text-blue-600 dark:text-blue-400" data-label="Assigned To"><?php echo htmlspecialchars($row['assigned_name'] ?: 'Unassigned'); ?></td>
                       <td class="py-4 px-3" data-label="Status"><span class="rounded-full <?php echo $statusClass; ?> px-3 py-1 text-xs"><?php echo $rowStatus === 'Resolved' ? 'Completed' : htmlspecialchars($rowStatus); ?></span></td>
                       <td class="py-4 px-3 text-slate-600 dark:text-slate-300 whitespace-nowrap" data-label="Action" onclick="event.stopPropagation();">

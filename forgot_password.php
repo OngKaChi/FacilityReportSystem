@@ -201,7 +201,8 @@ $showCompleteSection = $otpVerified;
       </ul>
     </div>
   <?php endif; ?>
-
+    
+  <?php if (!$success): ?>
   <form method="POST" action="forgot_password.php">
     <label class="block text-sm font-semibold mb-2">Email</label>
     <input type="email" name="email" value="<?php echo htmlspecialchars($pendingReset['email'] ?? $_POST['email'] ?? $_GET['email'] ?? ''); ?>" class="w-full mb-3 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-400" required <?php echo ($otpSent && !$otpVerified) || $otpVerified ? 'readonly' : ''; ?>>
@@ -255,6 +256,7 @@ $showCompleteSection = $otpVerified;
       <button class="w-full bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600" type="submit" name="otp_action" value="reset">Reset Password</button>
     <?php endif; ?>
   </form>
+  <?php endif; ?>
 
   <p class="text-center text-sm mt-4">
     Remembered your password? <a href="Login.php" class="text-blue-500 hover:underline">Login</a>

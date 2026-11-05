@@ -38,6 +38,31 @@ if ($stmt) {
     $stmt->close();
 }
 
+$assignmentNotifications = [];
+if ($user['role'] === 'helper') {
+    $assignmentStmt = $conn->prepare(
+        "SELECT r.id, r.category, r.floor, r.location, r.description,
+                ia.assignment_start, ia.assignment_end, ia.created_at
+         FROM issue_assignments ia
+         INNER JOIN reports r ON r.id = ia.report_id
+         WHERE ia.staff_id = ?
+         ORDER BY ia.created_at DESC"
+    );
+    if (!$assignmentStmt) {
+        throw new RuntimeException('Unable to prepare the assignment notifications query.');
+    }
+    $assignmentStmt->bind_param('i', $userId);
+    if (!$assignmentStmt->execute()) {
+        $assignmentStmt->close();
+        throw new RuntimeException('Unable to load assignment notifications.');
+    }
+    $assignmentResult = $assignmentStmt->get_result();
+    while ($row = $assignmentResult->fetch_assoc()) {
+        $assignmentNotifications[] = $row;
+    }
+    $assignmentStmt->close();
+}
+
 $achievementNoti = [];
 if ($user['role'] === 'user') {
     $achievementNotiStmt = $conn->prepare(
@@ -68,6 +93,11 @@ $latestNotification = $notifications[0]['updated_at'] ?? null;
 foreach ($achievementNoti as $achievement) {
     if (!$latestNotification || strtotime($achievement['earned_at']) > strtotime($latestNotification)) {
         $latestNotification = $achievement['earned_at'];
+    }
+}
+foreach ($assignmentNotifications as $assignmentNotification) {
+    if (!$latestNotification || strtotime($assignmentNotification['created_at']) > strtotime($latestNotification)) {
+        $latestNotification = $assignmentNotification['created_at'];
     }
 }
 ?>
@@ -186,7 +216,7 @@ foreach ($achievementNoti as $achievement) {
               <p id="noFilteredNotifications" class="mt-6 hidden rounded-2xl border border-dashed border-slate-300 bg-white p-8 text-center text-sm text-slate-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400">No messages match this filter.</p>
             <?php endif; ?>
             <?php elseif ($user['role'] === 'admin' || $user['role'] === 'helper'): ?>
-              <?php if ($newIssuesCount === 0): ?>
+              <?php if ($newIssuesCount === 0 && count($assignmentNotifications) === 0): ?>
                 <div class="rounded-2xl border border-dashed border-slate-300 bg-white px-6 py-16 text-center shadow-sm dark:border-slate-700 dark:bg-slate-900">
                   <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-cyan-50 text-cyan-600 dark:bg-cyan-950/60 dark:text-cyan-300">
                     <svg class="h-8 w-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M15 17h5l-1.4-1.4A2 2 0 0118 14.2V11a6 6 0 00-12 0v3.2a2 2 0 01-.6 1.4L4 17h5m6 0a3 3 0 11-6 0m6 0H9"/></svg>
@@ -197,6 +227,32 @@ foreach ($achievementNoti as $achievement) {
                   </div>
               <?php else: ?>
               <div id="notificationList" class="space-y-4">
+                <?php foreach ($assignmentNotifications as $assignmentNotification):
+                    $assignedAt = strtotime($assignmentNotification['created_at']);
+                    $isRecent = $assignedAt >= strtotime('-30 days');
+                ?>
+                  <article class="notification-item group rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-cyan-300 hover:shadow-md dark:border-slate-800 dark:bg-slate-900 dark:hover:border-cyan-700" data-recent="<?php echo $isRecent ? 'true' : 'false'; ?>">
+                    <div class="flex gap-4">
+                      <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-cyan-50 text-cyan-600 dark:bg-cyan-950/50 dark:text-cyan-300">
+                        <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
+                      </div>
+                      <div class="min-w-0 flex-1">
+                        <div class="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+                          <h3 class="font-bold text-slate-900 dark:text-white">A report has been assigned to you</h3>
+                          <time class="shrink-0 text-xs font-medium text-slate-400" datetime="<?php echo htmlspecialchars($assignmentNotification['created_at']); ?>"><?php echo htmlspecialchars(date('d M Y, H:i', $assignedAt)); ?></time>
+                        </div>
+                        <p class="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">You have been assigned the <span class="font-semibold"><?php echo htmlspecialchars($assignmentNotification['category']); ?></span> report. Please review the details and complete it within the assignment period.</p>
+                        <p class="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300"><?php echo htmlspecialchars($assignmentNotification['description']); ?></p>
+                        <div class="mt-4 flex flex-wrap gap-2 text-xs font-semibold">
+                          <span class="rounded-lg bg-slate-100 px-3 py-1.5 text-slate-600 dark:bg-slate-800 dark:text-slate-300"><?php echo htmlspecialchars($assignmentNotification['floor']); ?></span>
+                          <span class="rounded-lg bg-slate-100 px-3 py-1.5 text-slate-600 dark:bg-slate-800 dark:text-slate-300"><?php echo htmlspecialchars($assignmentNotification['location']); ?></span>
+                          <span class="rounded-lg bg-cyan-50 px-3 py-1.5 text-cyan-700 dark:bg-cyan-950/50 dark:text-cyan-300">Due <?php echo htmlspecialchars(date('d M Y', strtotime($assignmentNotification['assignment_end']))); ?></span>
+                        </div>
+                        <a href="assigned_issues.php" class="mt-4 inline-flex text-sm font-bold text-cyan-700 hover:text-cyan-600 dark:text-cyan-300 dark:hover:text-cyan-200">View assigned reports</a>
+                      </div>
+                    </div>
+                  </article>
+                <?php endforeach; ?>
                 <?php foreach ($newIssuesNoti as $notification):
                     $updatedAt = strtotime($notification['updated_at']);
                     $isRecent = $updatedAt >= strtotime('-30 days');

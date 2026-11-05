@@ -6,6 +6,42 @@ $userId = (int) $user['id'];
 $message = '';
 $messageType = 'success';
 
+$getLatestActiveAssignmentId = static function () use ($conn, $userId): int {
+    $statement = $conn->prepare("
+        SELECT COALESCE(MAX(ia.id), 0) AS latest_id
+        FROM issue_assignments ia
+        INNER JOIN reports r ON r.id = ia.report_id
+        WHERE ia.staff_id = ?
+          AND CURRENT_DATE BETWEEN ia.assignment_start AND ia.assignment_end
+          AND r.status IN ('Pending', 'In Progress')
+    ");
+    if (!$statement) {
+        throw new RuntimeException('Unable to prepare the assigned task check.');
+    }
+
+    $statement->bind_param('i', $userId);
+    if (!$statement->execute()) {
+        $statement->close();
+        throw new RuntimeException('Unable to check for newly assigned tasks.');
+    }
+
+    $latestId = (int) $statement->get_result()->fetch_assoc()['latest_id'];
+    $statement->close();
+    return $latestId;
+};
+
+if (isset($_GET['check_new_assignments'])) {
+    header('Content-Type: application/json');
+    header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+    echo json_encode([
+        'success' => true,
+        'latestAssignmentId' => $getLatestActiveAssignmentId(),
+    ]);
+    exit;
+}
+
+$latestAssignmentId = $getLatestActiveAssignmentId();
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $reportId = filter_input(INPUT_POST, 'report_id', FILTER_VALIDATE_INT);
     $status = trim($_POST['status'] ?? '');
@@ -194,5 +230,41 @@ $issueStatement->close();
       </section>
     <?php endif; ?>
   </main>
+  <script>
+    window.latestAssignmentId = <?php echo $latestAssignmentId; ?>;
+
+    (() => {
+      let checkingForAssignments = false;
+
+      async function checkForNewAssignments() {
+        if (checkingForAssignments || document.hidden) return;
+        checkingForAssignments = true;
+
+        try {
+          const response = await fetch('assigned_issues.php?check_new_assignments=1', {
+            cache: 'no-store',
+            headers: { Accept: 'application/json' }
+          });
+          if (!response.ok) throw new Error(`Assignment check failed (${response.status}).`);
+
+          const data = await response.json();
+          if (!data.success || !Number.isFinite(Number(data.latestAssignmentId))) {
+            throw new Error(data.error || 'The assignment check returned an invalid response.');
+          }
+
+          if (Number(data.latestAssignmentId) > window.latestAssignmentId) {
+            window.location.reload();
+          }
+        } catch (error) {
+          console.error('Unable to check for new assigned tasks:', error);
+        } finally {
+          checkingForAssignments = false;
+        }
+      }
+
+      window.setInterval(checkForNewAssignments, 15000);
+      document.addEventListener('visibilitychange', checkForNewAssignments);
+    })();
+  </script>
 </body>
 </html>

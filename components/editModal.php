@@ -9,24 +9,24 @@
 
       <div>
         <label for="editDescription" class="block text-sm font-medium text-slate-700 dark:text-gray-300 mb-2">Description</label>
-        <textarea id="editDescription" name="description" class="w-full border dark:border-slate-600 px-3 py-2 rounded dark:bg-slate-700 dark:text-white" rows="3" required></textarea>
+        <textarea id="editDescription" name="description" class="w-full border dark:border-slate-600 px-3 py-2 rounded dark:bg-slate-700 dark:text-white" rows="3" required readonly></textarea>
       </div>
 
       <div class="grid gap-4 md:grid-cols-2">
         <div>
           <label for="editCategory" class="block text-sm font-medium text-slate-700 dark:text-gray-300 mb-2">Issue Type</label>
-          <input id="editCategory" name="category" class="w-full border dark:border-slate-600 px-3 py-2 rounded dark:bg-slate-700 dark:text-white" required />
+          <input id="editCategory" name="category" class="w-full border dark:border-slate-600 px-3 py-2 rounded dark:bg-slate-700 dark:text-white" required readonly/>
         </div>
         <div>
           <label for="editLocation" class="block text-sm font-medium text-slate-700 dark:text-gray-300 mb-2">Location</label>
-          <input id="editLocation" name="location" class="w-full border dark:border-slate-600 px-3 py-2 rounded dark:bg-slate-700 dark:text-white" required />
+          <input id="editLocation" name="location" class="w-full border dark:border-slate-600 px-3 py-2 rounded dark:bg-slate-700 dark:text-white" required readonly/>
         </div>
       </div>
 
       <div class="grid gap-4 md:grid-cols-2">
         <div>
           <label for="editFloor" class="block text-sm font-medium text-slate-700 dark:text-gray-300 mb-2">Floor</label>
-          <input id="editFloor" name="floor" class="w-full border dark:border-slate-600 px-3 py-2 rounded dark:bg-slate-700 dark:text-white" required />
+          <input id="editFloor" name="floor" class="w-full border dark:border-slate-600 px-3 py-2 rounded dark:bg-slate-700 dark:text-white" required readonly/>
         </div>
         <div>
           <label for="editStatus" class="block text-sm font-medium text-slate-700 dark:text-gray-300 mb-2">Status</label>

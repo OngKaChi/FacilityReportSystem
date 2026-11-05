@@ -51,7 +51,7 @@ $issueStatement->close();
   ?>
   <main class="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
     <section class="dashboard-hero mb-8 overflow-hidden rounded-[2rem] border border-white/10 p-6 text-white shadow-[0_20px_50px_rgba(37,99,235,0.28)]">
-      <p class="text-xs font-bold uppercase tracking-[0.3em] text-cyan-200">Head of AFM workspace</p>
+      <p class="text-xs font-bold uppercase tracking-[0.3em] text-cyan-200">Checklist</p>
       <div class="mt-3 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h1 class="text-3xl font-black tracking-tight sm:text-4xl">Assigned issue progress</h1>

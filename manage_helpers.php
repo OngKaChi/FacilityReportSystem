@@ -38,7 +38,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_helper'])) {
                 store_user_otp($newUserId, $otpCode);
 
                 $baseUrl = (isset($_SERVER['HTTPS']) ? "https" : "http") . "://$_SERVER[HTTP_HOST]" . rtrim(dirname($_SERVER['PHP_SELF']), '/\\');
-                $resetUrl = $baseUrl . "/forgot_password.php?email=" . urlencode($email);
+                $resetUrl = $baseUrl . "/staff_setup.php?email=" . urlencode($email);
 
                 // Fix: Check if email actually sent and use a clean category name.
                 $sent = send_otp_email($email, $otpCode, 'account setup', $resetUrl);

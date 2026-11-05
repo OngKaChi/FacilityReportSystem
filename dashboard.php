@@ -3,6 +3,7 @@ require_once 'auth.php';
 require_login();
 $user = current_user();
 require_once __DIR__ . '/includes/report_read_state.php';
+require_once __DIR__ . '/includes/report_filters.php';
 require_once __DIR__ . '/components/achivement_earned.php'; // Include the achievement check logic
 
 // Fetch floor statistics for the map visualization
@@ -34,6 +35,14 @@ $resolvedToday = $resolvedTodayQuery && $resolvedTodayQuery->num_rows > 0 ? (int
     .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
     .dark .custom-scrollbar::-webkit-scrollbar-thumb { background: #475569; }
     .dashboard-hero { background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 45%, #0ea5e9 100%); }
+   .report-description {
+      display: -webkit-box;
+      max-width: 20rem;
+      overflow: hidden;
+      overflow-wrap: anywhere;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 2;
+    }
     .panel-surface { background: rgba(255,255,255,0.98); }
     .dark .panel-surface { background: rgba(15,23,42,0.96); }
     @media (max-width: 639px) {
@@ -155,69 +164,52 @@ $resolvedToday = $resolvedTodayQuery && $resolvedTodayQuery->num_rows > 0 ? (int
         <input type="hidden" name="view" value="reports">
         <div class="inline-flex items-center gap-3 rounded-3xl bg-gray-50 dark:bg-slate-700/50 px-4 py-2 text-sm text-gray-600 dark:text-gray-300 border dark:border-slate-700 shadow-sm">
           <input type="text" id="reportSearch" name="search" value="<?php echo htmlspecialchars($_GET['search'] ?? '', ENT_QUOTES); ?>" placeholder="Search description..." class="w-48 border-0 bg-transparent focus:outline-none dark:text-white" />
-        </div>
-        <select id="filterStatus" name="status" onchange="this.form.submit()" class="rounded-3xl bg-gray-50 dark:bg-slate-700/50 px-4 py-2 text-sm text-gray-600 dark:text-gray-300 border dark:border-slate-700 focus:ring-0 cursor-pointer shadow-sm">
-          <option value="">All Status</option>
-          <option value="Pending" <?php echo ($_GET['status'] ?? '') === 'Pending' ? 'selected' : ''; ?>>Pending</option>
-          <option value="In Progress" <?php echo ($_GET['status'] ?? '') === 'In Progress' ? 'selected' : ''; ?>>In Progress</option>
-          <option value="Resolved" <?php echo ($_GET['status'] ?? '') === 'Resolved' ? 'selected' : ''; ?>>Completed</option>
-        </select>
-        <div class="inline-flex items-center gap-2 rounded-3xl bg-gray-50 dark:bg-slate-700/50 px-4 py-2 text-sm text-gray-500 dark:text-gray-300 border dark:border-slate-700 shadow-sm">
-          <span class="text-xs font-semibold uppercase">From:</span>
-          <input type="date" id="filterDateStart" name="date_start" value="<?php echo htmlspecialchars($_GET['date_start'] ?? '', ENT_QUOTES); ?>" onchange="this.form.submit()" class="bg-transparent border-0 focus:ring-0 text-xs p-0">
-          <span class="text-xs font-semibold uppercase">To:</span>
-          <input type="date" id="filterDateEnd" name="date_end" value="<?php echo htmlspecialchars($_GET['date_end'] ?? '', ENT_QUOTES); ?>" onchange="this.form.submit()" class="bg-transparent border-0 focus:ring-0 text-xs p-0">
-        </div>
-        <button type="submit" class="rounded-3xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-blue-700">Search</button>
+          </div>
+          <select id="filterStatus" name="status" class="rounded-3xl bg-gray-50 dark:bg-slate-700/50 px-4 py-2 text-sm text-gray-600 dark:text-gray-300 border dark:border-slate-700 focus:ring-0 cursor-pointer shadow-sm">
+            <option value="">All Status</option>
+            <option value="Pending" <?php echo ($_GET['status'] ?? '') === 'Pending' ? 'selected' : ''; ?>>Pending</option>
+            <option value="In Progress" <?php echo ($_GET['status'] ?? '') === 'In Progress' ? 'selected' : ''; ?>>In Progress</option>
+            <option value="Resolved" <?php echo ($_GET['status'] ?? '') === 'Resolved' ? 'selected' : ''; ?>>Completed</option>
+          </select>
+          <div class="inline-flex items-center gap-2 rounded-3xl bg-gray-50 dark:bg-slate-700/50 px-4 py-2 text-sm text-gray-500 dark:text-gray-300 border dark:border-slate-700 shadow-sm">
+            <span class="text-xs font-semibold uppercase">From:</span>
+            <input type="date" id="filterDateStart" name="date_start" value="<?php echo htmlspecialchars($_GET['date_start'] ?? '', ENT_QUOTES); ?>" class="bg-transparent border-0 focus:ring-0 text-xs p-0">
+            <span class="text-xs font-semibold uppercase">To:</span>
+            <input type="date" id="filterDateEnd" name="date_end" value="<?php echo htmlspecialchars($_GET['date_end'] ?? '', ENT_QUOTES); ?>" class="bg-transparent border-0 focus:ring-0 text-xs p-0">
+          </div>
+          <button type="submit" class="rounded-3xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-blue-700">Search</button>
       </form>
     </div>
 
     <?php
     $reportsPerPage = 10;
     $currentPage = max(1, (int)($_GET['page'] ?? 1));
-    $search = trim($_GET['search'] ?? '');
-    $status = $_GET['status'] ?? '';
-    $dateStart = $_GET['date_start'] ?? '';
-    $dateEnd = $_GET['date_end'] ?? '';
-    $conditions = [];
-    $params = [];
-    $types = '';
+    $filters = getReportFilters($_GET);
+    if ($filters['dateStart'] !== '' || $filters['dateEnd'] !== '') {
+      $filters['dateFilterType'] = 'range';
+    }
+    $filters['selectedMonth'] = '';
+    $search = $filters['search'];
+    $status = $filters['status'];
+    $dateStart = $filters['dateStart'];
+    $dateEnd = $filters['dateEnd'];
 
-    if ($search !== '') {
-      $conditions[] = 'r.description LIKE ?';
-      $params[] = '%' . $search . '%';
-      $types .= 's';
-    }
-    if (in_array($status, ['Pending', 'In Progress', 'Resolved'], true)) {
-      $conditions[] = 'r.status = ?';
-      $params[] = $status;
-      $types .= 's';
-    } else {
-      $status = '';
-    }
-    if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $dateStart)) {
-      $conditions[] = 'DATE(r.created_at) >= ?';
-      $params[] = $dateStart;
-      $types .= 's';
-    } else {
-      $dateStart = '';
-    }
-    if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $dateEnd)) {
-      $conditions[] = 'DATE(r.created_at) <= ?';
-      $params[] = $dateEnd;
-      $types .= 's';
-    } else {
-      $dateEnd = '';
-    }
+    $filterClause = buildReportFilterClause($filters);
+    $params = $filterClause['params'];
+    $types = $filterClause['types'];
 
-    $where = $conditions ? ' WHERE ' . implode(' AND ', $conditions) : '';
+    $where = $filterClause['where'];
+    $where = $where === '' ? ' WHERE r.user_id = ?' : $where . ' AND r.user_id = ?';
+    $params[] = $user['id'];
+    $types .= 'i';
+
     $bindParams = static function ($statement, $types, &$params): void {
       if ($types === '') {
-        return;
+          return;
       }
       $values = [$types];
       foreach ($params as &$param) {
-        $values[] = &$param;
+          $values[] = &$param;
       }
       call_user_func_array([$statement, 'bind_param'], $values);
     };
@@ -232,11 +224,11 @@ $resolvedToday = $resolvedTodayQuery && $resolvedTodayQuery->num_rows > 0 ? (int
     $currentPage = min($currentPage, $totalPages);
     $offset = ($currentPage - 1) * $reportsPerPage;
     $sql = "SELECT r.*, u_reporter.name as reporter_name
-        FROM reports r
-        LEFT JOIN users u_reporter ON r.user_id = u_reporter.id
-        $where
-        ORDER BY r.created_at DESC
-        LIMIT $reportsPerPage OFFSET $offset";
+          FROM reports r
+          LEFT JOIN users u_reporter ON r.user_id = u_reporter.id
+          $where
+          ORDER BY r.created_at DESC
+          LIMIT $reportsPerPage OFFSET $offset";
     $resultStatement = $conn->prepare($sql);
     $bindParams($resultStatement, $types, $params);
     $resultStatement->execute();
@@ -280,11 +272,12 @@ $resolvedToday = $resolvedTodayQuery && $resolvedTodayQuery->num_rows > 0 ? (int
                       data-status="' . htmlspecialchars($row['status'], ENT_QUOTES) . '" 
                       data-date="' . date('Y-m-d', strtotime($row['created_at'])) . '"
                       onclick=\'showReportDetails(' . json_encode($row) . ')\'>';
-            echo '<td data-label="Category" class="relative px-4 py-3 text-sm text-gray-900 dark:text-gray-200">' . render_unread_report_dot((int)$row['id']) . $row['category'] . '</td>';
+            echo '<td data-label="Category" class="relative px-4 py-3 text-sm text-gray-900 dark:text-gray-200">' 
+            . render_unread_report_dot((int)$row['id']) . $row['category'] . '</td>';
             echo '<td data-label="Reporter" class="px-4 py-3 text-sm text-gray-900 dark:text-gray-200">' . htmlspecialchars($row['reporter_name'] ?? 'Guest') . '</td>';
             echo '<td data-label="Floor" class="px-4 py-3 text-sm text-gray-900 dark:text-gray-200">' . $row['floor'] . '</td>';
             echo '<td data-label="Location" class="px-4 py-3 text-sm text-gray-900 dark:text-gray-200">' . $row['location'] . '</td>';
-            echo '<td data-label="Description" class="px-4 py-3 text-sm text-gray-900 dark:text-gray-200 max-w-xs truncate">' . $row['description'] . '</td>';
+            echo '<td data-label="Description" class="px-4 py-3 text-sm text-gray-900 dark:text-gray-200 max-w-xs truncate report-description">' . $row['description'] . '</td>';
             echo '<td data-label="Urgency" class="px-4 py-3 text-sm font-semibold text-gray-900 dark:text-gray-200">' . htmlspecialchars($row['emergency_tier'] ?? 'Normal') . '</td>';
             echo '<td data-label="Status" class="px-4 py-3"><span class="px-2 py-1 text-xs font-medium rounded-full ' . $statusColor . '">' . htmlspecialchars($row['status'] === 'Resolved' ? 'Completed' : $row['status']) . '</span></td>';
             echo '<td data-label="Date" class="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">' . date('M d, Y', strtotime($row['created_at'])) . '</td>';
@@ -296,11 +289,7 @@ $resolvedToday = $resolvedTodayQuery && $resolvedTodayQuery->num_rows > 0 ? (int
         echo '</div>';
 
         if ($totalPages > 1):
-          $paginationQuery = ['view' => 'reports'];
-          if ($search !== '') $paginationQuery['search'] = $search;
-          if ($status !== '') $paginationQuery['status'] = $status;
-          if ($dateStart !== '') $paginationQuery['date_start'] = $dateStart;
-          if ($dateEnd !== '') $paginationQuery['date_end'] = $dateEnd;
+          $paginationQuery = buildReportPaginationQuery($filters);
           echo '<nav class="mt-5 flex flex-wrap items-center justify-center gap-2" aria-label="Issue pages">';
           if ($currentPage > 1) {
             $paginationQuery['page'] = $currentPage - 1;
@@ -723,43 +712,53 @@ chatInput.addEventListener('keypress', (e) => {
 document.addEventListener('DOMContentLoaded', function() {
     const reportForm = document.getElementById('reportForm');
     if (reportForm) {
-        reportForm.addEventListener('submit', function(e) {
+        reportForm.addEventListener('submit', async function(e) {
             e.preventDefault(); // Prevent the default form submission
 
             const formData = new FormData(reportForm);
             const submitButton = reportForm.querySelector('button[type="submit"]');
-
-            // Disable button
             submitButton.disabled = true;
 
-            fetch('components/submit_report.php', {
-                method: 'POST',
-                body: formData
-            })
-            .then(async response => {
-              const data = await response.json();
-                if (!response.ok) {
-                    // Handle non-2xx responses like duplicates (409)
-                    if (response.status === 409) {
-                        window.location.href = 'dashboard.php?view=reports&duplicate=1';
-                    } else {
-                  throw new Error(data.error || 'The server could not save the report.');
+            try {
+                let response = await fetch('components/submit_report.php', {
+                    method: 'POST',
+                    body: formData
+                });
+                let data = await response.json();
+
+                if (response.status === 409 && data.error === 'possible_duplicate') {
+                    const matchSummary = data.matches.map(match =>
+                        `• ${match.category} at ${match.location}, ${match.floor} — ${match.status} (${match.created_at})`
+                    ).join('\n');
+                    const shouldContinue = window.confirm(
+                        `A similar open report was submitted at this location within the last 24 hours:\n\n${matchSummary}\n\nIs this a separate issue? Choose OK to submit anyway, or Cancel to review your report.`
+                    );
+
+                    if (!shouldContinue) {
+                        return;
                     }
+
+                    formData.set('confirm_possible_duplicate', '1');
+                    response = await fetch('components/submit_report.php', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    data = await response.json();
                 }
-              return data;
-            })
-            .then(data => {
-                if (data && data.success) {
-                    // On success, redirect to the reports view with a success message
+
+                if (!response.ok || !data.success) {
+                    throw new Error(data.error || 'The server could not save the report.');
+                }
+
+                if (data.success) {
                     window.location.href = 'dashboard.php?view=reports&success=1';
                 }
-            })
-            .catch(error => {
+            } catch (error) {
                 console.error('Error submitting report:', error);
-              alert('Unable to submit the report: ' + error.message);
-                // Restore button on error
+                alert('Unable to submit the report: ' + error.message);
+            } finally {
                 submitButton.disabled = false;
-            });
+            }
         });
     }
 });

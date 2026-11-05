@@ -31,7 +31,7 @@ and database connection settings before running setup.
 
    ```powershell
    Copy-Item config.example.php config.php
-   Copy-Item "auth example.php" auth.php
+   Copy-Item auth.example.php auth.php
    ```
 
    Keep `config.php` and `auth.php` local. They are ignored by Git because they
@@ -52,7 +52,7 @@ and database connection settings before running setup.
    $adminRole = 'admin';
    ```
    
-   Change it if you wish
+   
 
    ```text
    http://localhost/FYP/setup.php
@@ -77,6 +77,12 @@ Email-based OTPs and staff assignment notifications require working SMTP
 settings in the local `auth.php` file. Configure these for your SMTP provider.
 For local development without SMTP, the `MAIL_DEBUG_TO_FILE` option can be
 enabled to write email messages to a local log instead.
+
+If wish to use working SMTP settings. Change these in `auth.php`.
+```text
+$smtpUser = ''; // Your Gmail address here
+$smtpPass = ''; // Your Gmail App Password here
+```
 
 ## Notes
 

@@ -18,7 +18,7 @@ and database connection settings before running setup.
 
 ## Installation and startup
 
-1. Place the project folder at `C:\xampp\htdocs\FYP`.
+1. Place the project folder at `C:\xampp\htdocs\FacilityReportSystem`.
 2. Start **Apache** and **MySQL** from the XAMPP Control Panel.
 3. Open PowerShell in the project folder and install the PHP dependencies:
 
@@ -55,7 +55,7 @@ and database connection settings before running setup.
    
 
    ```text
-   http://localhost/FYP/setup.php
+   http://localhost/FacilityReportSystem/setup.php
    ```
 
    The setup script creates the `fyp` database and required tables, and seeds
@@ -65,7 +65,7 @@ and database connection settings before running setup.
 8. Open the application:
 
    ```text
-   http://localhost/FYP/Login.php
+   http://localhost/FacilityReportSystem/Login.php
    ```
 
    Register a user account or sign in with the administrator account created

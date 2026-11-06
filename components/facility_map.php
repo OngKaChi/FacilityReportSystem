@@ -469,20 +469,20 @@ $isUser = isset($_SESSION['user']['role']) && $_SESSION['user']['role'] === 'use
 <script>
 (function () {
   // ── Data injected from PHP ──────────────────────────────────────────────
-  const FLOOR_ROOMS  = <?php echo $floorRoomsJson; ?>;
-  const ROOM_STATS   = <?php echo $roomStatsJson; ?>;
-  const FLOOR_STATS  = <?php echo $floorStatsJson; ?>;
-  const FLOOR_ORDER  = <?php echo $floorListJson; ?>;
-  const IS_ADMIN     = <?php echo $isAdmin ? 'true' : 'false'; ?>;
-  const IS_USER      = <?php echo $isUser ? 'true' : 'false'; ?>;
+  const FLOOR_ROOMS = <?php echo $floorRoomsJson; ?>;
+  const ROOM_STATS = <?php echo $roomStatsJson; ?>;
+  const FLOOR_STATS = <?php echo $floorStatsJson; ?>;
+  const FLOOR_ORDER = <?php echo $floorListJson; ?>;
+  const IS_ADMIN = <?php echo $isAdmin ? 'true' : 'false'; ?>;
+  const IS_USER = <?php echo $isUser ? 'true' : 'false'; ?>;
 
   // ── DOM refs ────────────────────────────────────────────────────────────
-  const svg       = document.getElementById('fm-svg');
-  const tooltip   = document.getElementById('fm-tooltip');
-  const btnWrap   = document.getElementById('fm-floor-btns');
-  const pillWrap  = document.getElementById('fm-issue-pills');
+  const svg = document.getElementById('fm-svg');
+  const tooltip = document.getElementById('fm-tooltip');
+  const btnWrap = document.getElementById('fm-floor-btns');
+  const pillWrap = document.getElementById('fm-issue-pills');
   <?php if ($isAdmin): ?>
-  const editModal  = document.getElementById('fm-edit-modal');
+  const editModal = document.getElementById('fm-edit-modal');
   const labelInput = document.getElementById('fm-new-label');
   <?php endif; ?>
 
@@ -490,7 +490,6 @@ $isUser = isset($_SESSION['user']['role']) && $_SESSION['user']['role'] === 'use
 
   let currentFloor = 'Level 2'; // Default to Ground Floor
 
-  // ── Helpers ─────────────────────────────────────────────────────────────
   function issueCount(floor)  { return FLOOR_STATS[floor] || 0; }
   function roomCount(floor, roomId) { return (ROOM_STATS[floor] && ROOM_STATS[floor][roomId]) || 0; }
 

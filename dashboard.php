@@ -9,7 +9,7 @@ require_once __DIR__ . '/components/achivement_earned.php'; // Include the achie
 // Fetch floor statistics for the map visualization
 $view = $_GET['view'] ?? 'map';
 
-$floorList = ['Rooftop', 'Level 6', 'Level 5', 'Level 4', 'Level 3', 'Level 2', 'Level 1', 'Ground Floor', 'Basement'];
+$floorList = ['Rooftop', 'Level 6', 'Level 5', 'Level 4', 'Level 3', 'Level 2', 'Level 1', 'Basement'];
 $floorStats = [];
 foreach ($floorList as $f) { $floorStats[$f] = 0; }
 
